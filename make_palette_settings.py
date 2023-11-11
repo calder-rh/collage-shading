@@ -5,9 +5,6 @@ code_path = workspace.getcwd() / 'shading' / 'fantasy' / 'code'
 if code_path not in sys.path:
     sys.path.append(code_path)
 
-# from internals import palettes
-# from internals.shading_path import shading_path
-
 from internals import palettes
 importlib.reload(palettes)
 from internals import palettes
