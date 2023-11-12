@@ -7,10 +7,11 @@ if code_path not in sys.path:
     sys.path.append(code_path)
 
 import subprocess
-from internals import network, shading_path, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support
+from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support
 importlib.reload(network)
 importlib.reload(shading_path)
 importlib.reload(collage_shader)
+importlib.reload(shading_controller)
 importlib.reload(tracking_projection)
 importlib.reload(coordinate_converter)
 importlib.reload(surface_values)
@@ -23,7 +24,6 @@ from internals.shading_path import shading_path
 from internals.surface_values import calculate_surface_values
 from internals.collage_shader import CollageShader
 from pathlib import Path
-from hashlib import md5
 import json
 from shutil import rmtree
 
@@ -38,7 +38,7 @@ if dialog_output is None:
     exit()
 map_image_path = Path(dialog_output[0])
 
-image_hash = md5(map_image_path.read_bytes()).hexdigest()
+image_modification_time = map_image_path.stat().st_mtime
 
 map_dir_path = map_image_path.with_name(map_image_path.stem)
 map_data_path = map_dir_path / 'map data.json'
@@ -47,7 +47,7 @@ masks_path = map_dir_path / 'masks'
 if map_data_path.exists():
     with map_data_path.open() as file:
         original_map_data = json.load(file)
-    if original_map_data['hash'] == image_hash:
+    if original_map_data['last modified'] == image_modification_time:
         map_data_status = 'up to date'
     else:
         map_data_status = 'out of date'
@@ -74,7 +74,7 @@ if map_data_status != 'up to date':
 with map_data_path.open() as file:
     map_data = json.load(file)
 
-map_data['hash'] = image_hash
+map_data['last modified'] = image_modification_time
 
 if map_data['anti-aliasing warning']:
     msg = 'It looks like you may have used a brush with anti-aliasing, which produces many colors along the edge of a stroke. If that is the case and you make a shader based on this map, each of those different colors along the edge will become its own facet. Do you still want to continue?'
@@ -92,7 +92,9 @@ num_facets = len(map_data['facets'])
 if num_facets > 1 and (not masks_path.exists() or facet_borders_changed or blur_markers_changed):
     if masks_path.exists():
         rmtree(masks_path)
-    promptDialog(t='Enter resolution', m='Enter the resolution for the blur mask images. Larger values take longer to run.', b=['OK'], ma='left', st='integer', tx='256')
+    dialog_output = promptDialog(t='Enter resolution', m='Enter the resolution for the blur mask images. Larger values take longer to run.', b=['OK'], ma='left', st='integer', tx='256')
+    if dialog_output == 'dismiss':
+        exit()
     blur_resolution = int(promptDialog(q=True, tx=True))
     node = None
     for node in selection:

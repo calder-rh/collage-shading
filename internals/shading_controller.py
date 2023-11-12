@@ -76,4 +76,5 @@ class ShadingController(Network):
                      self.camera.focal_length,
                      self.camera.horizontal_aperture]:
             connections = listConnections(attr, source=True, destination=False, plugs=True)
-            connections[0] // attr
+            if connections:
+                connections[0] // attr

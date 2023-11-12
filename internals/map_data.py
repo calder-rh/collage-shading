@@ -275,7 +275,7 @@ def make_map_data(image_path, data_path):
         all_facet_instructions_data[facet_instructions.color_index] = facet_instructions_data
     out_data['facets'] = all_facet_instructions_data
     out_data['anti-aliasing warning'] = len(color_counts) > 30 or any(count < 25 for color, count in color_counts.items() if color != white)
-    out_data['hash'] = None
+    out_data['last modified'] = None
     if len(all_facet_instructions) > 2:
         out_data['pixels'] = index_array.tolist()
 

@@ -10,7 +10,7 @@ import sys, subprocess
 
 
 def make_uv_file(name, resolution):
-    path = shading_path('maps', name + '.png')
+    path = shading_path('maps', name + ' UVs.png')
     if path.exists():
         confirmDialog(t='Error', m='There is already a file with that name.', b='OK', cb='OK', db='OK', icon='warning', ma='left')
         exit()
