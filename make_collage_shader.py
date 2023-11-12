@@ -92,7 +92,7 @@ num_facets = len(map_data['facets'])
 if num_facets > 1 and (not masks_path.exists() or facet_borders_changed or blur_markers_changed):
     if masks_path.exists():
         rmtree(masks_path)
-    promptDialog(t='Enter Resolution', m='Enter the resolution for the blur mask images. Larger values take longer to run.', b=['OK'], ma='left', st='integer', tx='256')
+    promptDialog(t='Enter resolution', m='Enter the resolution for the blur mask images. Larger values take longer to run.', b=['OK'], ma='left', st='integer', tx='256')
     blur_resolution = int(promptDialog(q=True, tx=True))
     node = None
     for node in selection:

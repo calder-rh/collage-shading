@@ -2,6 +2,8 @@ from pymel.core import *
 import sys, webbrowser, subprocess
 
 def dialog_with_support(title, msg, buttons, **kwargs):
+    if isinstance(buttons, str):
+        buttons = [buttons]
     dialog_output = confirmDialog(t=title, m=msg, b=['What?'] + buttons, ma='left', **kwargs)
     if dialog_output == 'What?':
         webbrowser.open('slack://channel?id=C05BFV55GLT&team=T05B9C5MHKQ')

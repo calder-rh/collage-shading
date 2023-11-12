@@ -5,7 +5,6 @@ except:
 from pathlib import Path
 import json
 import re
-from math import inf
 from abc import ABC, abstractmethod
 from random import uniform
 
@@ -16,6 +15,7 @@ shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
 
 
 def is_palette(path):
+    path = Path(path)
     try:
         rel_path = path.relative_to(shading_path('palettes'))
     except TypeError:
@@ -30,6 +30,9 @@ def is_palette(path):
 def is_valid_selection(path):
     path = Path(path)
     return is_palette(path) or (is_palette(path.parent) and re.fullmatch(shade_regex, path.name))
+
+
+is_gradient = is_palette
 
 
 def get_index(name):
@@ -66,16 +69,16 @@ class Palette(ABC):
             return self._default_settings()
     
     @abstractmethod
-    def _default_shade_settings(self):
+    def _default_shade_settings(self, **kwargs):
         ...
     
-    def _default_settings(self):
-        return {'up': 0, 'shades': self._default_shade_settings()}
+    def _default_settings(self, **kwargs):
+        return {'up': 0, 'shades': self._default_shade_settings(**kwargs)}
 
-    def make_settings_file(self):
+    def make_settings_file(self, **kwargs):
         if self.settings_path.exists():
             return
-        settings = self._default_settings()
+        settings = self._default_settings(**kwargs)
         instructions = self._instructions()
         data = {'description': instructions} | settings
         with open(self.settings_path, 'w') as file:
@@ -139,10 +142,10 @@ class GradientPalette(Palette):
             'luminance': 'How much light should be hitting the surface to make this shade show up. (Between 0 and 1)'
         }
     
-    def _default_shade_settings(self):
+    def _default_shade_settings(self, num_shades=default_num_shades):
         shade_settings = []
-        for i in range(default_num_shades):
-            ratio = i / (default_num_shades - 1)
+        for i in range(num_shades):
+            ratio = i / (num_shades - 1)
             shade_settings.append({'luminance': ratio, 'y': ratio})
         return shade_settings
     

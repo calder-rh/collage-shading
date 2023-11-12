@@ -8,8 +8,8 @@ from internals.shading_controller import ShadingController
 from internals.shading_path import relative_path
 import json
 
-solid_region = 0.05
-noise_scale = 300
+solid_region = 0.02
+noise_scale = 1000
 noise_adjustment = 0.1
 
 
@@ -40,8 +40,7 @@ class Luminance(Network):
         noise_projection.outColorR >> adjusted_noise.inputValue
 
         noisy_luminance = self.add(scaled_luminance, adjusted_noise.outValue, 'noisy_luminance')
-        # TODO which do we want?
-        self.luminance = scaled_luminance
+        self.luminance = noisy_luminance
 
 
 class FacetShader(Network):
