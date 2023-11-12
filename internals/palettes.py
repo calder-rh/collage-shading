@@ -98,7 +98,7 @@ class ImagesPalette(Palette):
         return {
             'up': 'The image will rotate so that this direction is pointing in the same direction as the object’s up vector. Measured clockwise from the top.',
             'shades': 'A list of all the shades that make up this palette, arranged from dark to light, with settings for each one. Here is a description of each setting:',
-            'lightness': 'How much light should be hitting the surface to make this shade show up. (Between 0 and 1)',
+            'luminance': 'How much light should be hitting the surface to make this shade show up. (Between 0 and 1)',
             'expected name': 'What the filename of this shade file probably starts with, if you’re counting from 0. For reference only.'
         }
         
@@ -107,7 +107,7 @@ class ImagesPalette(Palette):
         shade_settings = []
         for i in range(num_shades):
             ratio = i / (num_shades - 1)
-            shade_settings.append({'lightness': ratio, 'expected name': f's{i}'})
+            shade_settings.append({'luminance': ratio, 'expected name': f's{i}'})
         return shade_settings
     
     def make(self, scale, edge_distance):
@@ -115,13 +115,13 @@ class ImagesPalette(Palette):
         horizontal_edge_distance, vertical_edge_distance = edge_distance
 
         self.facet_images = []
-        self.lightness_values = []
+        self.luminance_values = []
 
         x = uniform(horizontal_edge_distance, 1 - horizontal_edge_distance)
         y = uniform(vertical_edge_distance, 1 - vertical_edge_distance)
         for image, setting in zip(self.images, settings['shades']):
             self.facet_images.append(FacetImage(image, x, y, scale))
-            self.lightness_values.append(setting['lightness'])
+            self.luminance_values.append(setting['luminance'])
 
 
 class GradientPalette(Palette):
@@ -136,14 +136,14 @@ class GradientPalette(Palette):
             'up': 'The image will rotate so that this direction is pointing in the same direction as the object’s up vector. Measured clockwise from the top.',
             'shades': f'A list of all the parts of the gradient image that make up this palette, arranged from dark to light, with settings for each one. There are {default_num_shades} by default, but you can add or remove them. Here is a description of each setting:',
             'y': 'The y coordinate within the gradient image that is used for this shade. (0 = bottom, 1 = top, within the region allowed by the edge distance instructions.)',
-            'lightness': 'How much light should be hitting the surface to make this shade show up. (Between 0 and 1)'
+            'luminance': 'How much light should be hitting the surface to make this shade show up. (Between 0 and 1)'
         }
     
     def _default_shade_settings(self):
         shade_settings = []
         for i in range(default_num_shades):
             ratio = i / (default_num_shades - 1)
-            shade_settings.append({'lightness': ratio, 'y': ratio})
+            shade_settings.append({'luminance': ratio, 'y': ratio})
         return shade_settings
     
     def make(self, scale, edge_distance):
@@ -151,13 +151,13 @@ class GradientPalette(Palette):
         horizontal_edge_distance, vertical_edge_distance = edge_distance
 
         self.facet_images = []
-        self.lightness_values = []
+        self.luminance_values = []
 
         for setting in settings['shades']:
             x = uniform(horizontal_edge_distance, 1 - horizontal_edge_distance)
             y = vertical_edge_distance + setting['y'] * (1 - 2 * vertical_edge_distance)
             self.facet_images.append(FacetImage(self.image, x, y, scale))
-            self.lightness_values.append(setting['lightness'])
+            self.luminance_values.append(setting['luminance'])
 
 
 def indices_to_path(indices):

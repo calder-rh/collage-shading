@@ -263,8 +263,6 @@ def make_map_data(image_path, data_path):
                     setattr(facet, attr_name, default_value)
 
     out_data = {}
-    out_data['blur resolution'] = None
-    out_data['anti-aliasing warning'] = len(color_counts) > 30 or any(count < 25 for color, count in color_counts.items() if color != white)
     all_facet_instructions_data = {}
     for facet_instructions in all_facet_instructions[1:]:
         facet_instructions_data = {'palette': facet_instructions.palette_path_indices,
@@ -276,6 +274,8 @@ def make_map_data(image_path, data_path):
                                    'map color': facet_instructions.color}
         all_facet_instructions_data[facet_instructions.color_index] = facet_instructions_data
     out_data['facets'] = all_facet_instructions_data
+    out_data['anti-aliasing warning'] = len(color_counts) > 30 or any(count < 25 for color, count in color_counts.items() if color != white)
+    out_data['hash'] = None
     if len(all_facet_instructions) > 2:
         out_data['pixels'] = index_array.tolist()
 

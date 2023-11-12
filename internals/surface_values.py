@@ -1,10 +1,8 @@
 from pymel.core import *
 from internals.coordinate_converter import CoordinateConverter
-from internals.shading_path import shading_path
 import json
 import itertools
-import re
-
+from internals.dialog_with_support import dialog_with_support
 
 default_blur_size_ratio = 0.05
 
@@ -13,7 +11,7 @@ def vector_sum(p, q):
     return [pc + qc for pc, qc in zip(p, q)]
 
 
-def calculate_surface_values(obj, map_data_path):
+def calculate_surface_values(obj, map_data_path, blur_resolution):
     map_dir_path = map_data_path.parent
     surface_values_path = map_dir_path / 'surface values.json'
     masks_path = map_dir_path / 'masks'
@@ -25,38 +23,41 @@ def calculate_surface_values(obj, map_data_path):
     with open(map_data_path) as file:
         map_data = json.load(file)
 
-    blur_resolution = map_data['blur resolution']
     facet_instructions = map_data['facets']
     pixels = map_data['pixels']
     map_resolution = len(pixels)
 
-    marker_pairs = sorted([
-        item + (
-            sum(
-                ((xyzs := [converter.pixel_to_xyz(*pixel, map_resolution) for pixel in item[:2]]) [0][c] 
-                                                                                            - xyzs[1][c]) ** 2
-                for c in range(3)
-            ) ** 0.5,
-        )
-        for item in
-        itertools.chain.from_iterable([
-            itertools.product(
-                *[
-                    [tuple(blur_marker) for blur_marker in facet_instructions[facet_index]['blur markers']]
-                    for facet_index in pair],
-                (pair,)
+    try:
+        marker_pairs = sorted([
+            item + (
+                sum(
+                    ((xyzs := [converter.pixel_to_xyz(*pixel, map_resolution) for pixel in item[:2]]) [0][c] 
+                                                                                                - xyzs[1][c]) ** 2
+                    for c in range(3)
+                ) ** 0.5,
             )
-            for pair in [
-                (str(index_1), str(index_2))
-                for index_1, index_2 in
-                itertools.combinations(
-                    range(1, len(facet_instructions) + 1),
-                    2
+            for item in
+            itertools.chain.from_iterable([
+                itertools.product(
+                    *[
+                        [tuple(blur_marker) for blur_marker in facet_instructions[facet_index]['blur markers']]
+                        for facet_index in pair],
+                    (pair,)
                 )
-            ]
-        ])],
-        key=lambda item: item[3]
-    )
+                for pair in [
+                    (str(index_1), str(index_2))
+                    for index_1, index_2 in
+                    itertools.combinations(
+                        range(1, len(facet_instructions) + 1),
+                        2
+                    )
+                ]
+            ])],
+            key=lambda item: item[3]
+        )
+    except TypeError:
+        dialog_with_support('Error', 'Invalid configuration of blur distance markers (yellow pixels). These pixels must stay inside the UV shells.', ['I’ll fix it'], cb='I’ll fix it', db='I’ll fix it', icon='warning')
+        exit()
 
     selected_pairs = []
     while marker_pairs:
@@ -99,7 +100,7 @@ def calculate_surface_values(obj, map_data_path):
     blur_values = [[[0 for _ in range(blur_resolution)] for _ in range(blur_resolution)] for _ in range(num_facets)]
     facet_center_sums = [[[0, 0, 0], 0] for _ in range(num_facets)]
 
-    progress_window = window(t='Blurring edges…')
+    progress_window = window(t='Generating mask images…')
     columnLayout()
     progress_control = progressBar(maxValue=blur_resolution, width=300)
     showWindow(progress_window)
