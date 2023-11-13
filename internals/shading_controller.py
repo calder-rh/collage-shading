@@ -1,5 +1,4 @@
 from pymel.core import *
-from internals.network import Network
 
 
 class ShadingController:
@@ -52,6 +51,8 @@ class ShadingController:
                         self_attr >> sc_attr
                     self.luminance_factor >> sc.luminance_factor
                     self.aspect_ratio >> sc.aspect_ratio
+        
+        print('A' * 100, self.camera)
     
     def connect_camera(self, camera):
         camera_transform = camera.getTransform()
