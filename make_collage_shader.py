@@ -24,8 +24,8 @@ from internals.shading_path import shading_path
 from internals.surface_values import calculate_surface_values
 from internals.collage_shader import CollageShader
 from pathlib import Path
-import json
 from shutil import rmtree
+import json
 
 
 selection = ls(sl=True)
@@ -88,10 +88,11 @@ if map_data['anti-aliasing warning']:
 facet_borders_changed = map_data_status != 'nonexistent' and original_map_data['pixels'] != map_data['pixels']
 blur_markers_changed = map_data_status != 'nonexistent' and [facet['blur markers'] for facet in original_map_data['facets'].values()] != [facet['blur markers'] for facet in map_data['facets'].values()]
 
+masks_exist = masks_path.exists() and any(file.suffix == '.png' for file in masks_path.iterdir())
 num_facets = len(map_data['facets'])
-if num_facets > 1 and (not masks_path.exists() or facet_borders_changed or blur_markers_changed):
-    if masks_path.exists():
-        rmtree(masks_path)
+if num_facets > 1 and (not masks_exist or facet_borders_changed or blur_markers_changed):
+    if masks_exist:
+        rmtree(masks_path, ignore_errors=True)
     dialog_output = promptDialog(t='Enter resolution', m='Enter the resolution for the blur mask images. Larger values take longer to run.', b=['OK'], ma='left', st='integer', tx='256')
     if dialog_output == 'dismiss':
         exit()

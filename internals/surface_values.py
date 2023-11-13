@@ -15,7 +15,8 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     map_dir_path = map_data_path.parent
     surface_values_path = map_dir_path / 'surface values.json'
     masks_path = map_dir_path / 'masks'
-    if masks_path.exists():
+    masks_exist = masks_path.exists() and any(file.suffix == '.png' for file in masks_path.iterdir())
+    if masks_exist and surface_values_path.exists():
         return surface_values_path
 
     converter = CoordinateConverter({'object': obj.name()}, obj)
