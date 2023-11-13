@@ -167,7 +167,8 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     data['facet centers'] = facet_centers
     data['blur values'] = blur_values
 
-    masks_path.mkdir()
+    if not masks_path.exists():
+        masks_path.mkdir()
     with surface_values_path.open(mode='w') as file:
         json.dump(data, file)
     
