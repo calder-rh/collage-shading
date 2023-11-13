@@ -28,12 +28,14 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     pixels = map_data['pixels']
     map_resolution = len(pixels)
 
+    pixel_xyzs = {tuple(pixel): converter.pixel_to_xyz(*pixel, map_resolution) for pixel in itertools.chain.from_iterable(facet['blur markers'] for facet in facet_instructions.values())}
+
     # try:
     marker_pairs = sorted([
         item + (
             sum(
-                ((xyzs := [converter.pixel_to_xyz(*pixel, map_resolution) for pixel in item[:2]]) [0][c] 
-                                                                                            - xyzs[1][c]) ** 2
+                ((xyzs := [pixel_xyzs[pixel] for pixel in item[:2]]) [0][c] 
+                                                               - xyzs[1][c]) ** 2
                 for c in range(3)
             ) ** 0.5,
         )
