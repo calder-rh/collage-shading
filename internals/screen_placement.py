@@ -26,7 +26,7 @@ class ScreenPlacement(Network):
     relevant_context = ['object', 'facet']
     
     def __init__(self, context, world_placement, image_up):
-        sc = ShadingController
+        sc = ShadingController()
         flf = self.build(FocalLengthFactor({}))
 
         # Find the location of the object in the space of the camera
