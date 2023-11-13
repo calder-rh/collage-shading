@@ -77,6 +77,9 @@ def shading_node_makers(prefix, node_set, delete_setting):
             node = shadingNode('floatMath', asUtility=True, name=name)
             node.operation.set(operation)
 
+            if node_name == 'scaled_luminance':
+                print('D' * 100, input2, type(input2), input2.type())
+
             if isinstance(input1, nodetypes.FloatMath):
                 input1.outFloat.connect(node.floatA)
             elif isinstance(input1, general.Attribute):

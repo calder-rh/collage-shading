@@ -20,7 +20,6 @@ class Luminance(Network):
         raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
         sc = ShadingController()
         scaled_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'scaled_luminance')
-        print('C' * 100, scaled_luminance.listConnections())
 
         noise = self.utility('aiNoise', 'luminance_noise')
         noise.coordSpace.set(3)
