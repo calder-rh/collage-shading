@@ -33,6 +33,7 @@ class ShadingController(Network):
             self.camera = node.camera
             self.aspect_ratio = node.aspect_ratio
             self.luminance_factor = node.luminance_factor
+            print('a', self.luminance_factor)
 
             ref_shading_controllers = ls(regex=f'[^:]+:({sc_name}|{rscs_name})')
             if ref_shading_controllers:

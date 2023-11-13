@@ -5,7 +5,6 @@ from internals.world_placement import RigidWorldPlacement
 from internals.screen_placement import ScreenPlacement
 from internals.tracking_projection import TrackingProjection
 from internals.shading_controller import ShadingController
-from internals.shading_path import relative_path
 import json
 
 solid_region = 0.02
@@ -20,6 +19,7 @@ class Luminance(Network):
     def __init__(self, context):
         raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
         sc = ShadingController({})
+        print('b', sc.luminance_factor)
         scaled_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'scaled_luminance')
 
         noise = self.utility('aiNoise', 'luminance_noise')
