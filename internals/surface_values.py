@@ -28,42 +28,39 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     pixels = map_data['pixels']
     map_resolution = len(pixels)
 
-    print(converter.last_calculation)
-    pixel_xyzs = {tuple(pixel): converter.pixel_to_xyz(*pixel, map_resolution) for pixel in itertools.chain.from_iterable(facet['blur markers'] for facet in facet_instructions.values())}
-    print(pixel_xyzs)
-    exit()
+    pixel_xyzs = {tuple(pixel): converter.pixel_to_xyz(pixel[1], pixel[0], map_resolution) for pixel in itertools.chain.from_iterable(facet['blur markers'] for facet in facet_instructions.values())}
 
-    # try:
-    marker_pairs = sorted([
-        item + (
-            sum(
-                ((xyzs := [pixel_xyzs[pixel] for pixel in item[:2]]) [0][c] 
-                                                               - xyzs[1][c]) ** 2
-                for c in range(3)
-            ) ** 0.5,
-        )
-        for item in
-        itertools.chain.from_iterable([
-            itertools.product(
-                *[
-                    [tuple(blur_marker) for blur_marker in facet_instructions[facet_index]['blur markers']]
-                    for facet_index in pair],
-                (pair,)
+    try:
+        marker_pairs = sorted([
+            item + (
+                sum(
+                    ((xyzs := [pixel_xyzs[pixel] for pixel in item[:2]]) [0][c] 
+                                                                - xyzs[1][c]) ** 2
+                    for c in range(3)
+                ) ** 0.5,
             )
-            for pair in [
-                (str(index_1), str(index_2))
-                for index_1, index_2 in
-                itertools.combinations(
-                    range(1, len(facet_instructions) + 1),
-                    2
+            for item in
+            itertools.chain.from_iterable([
+                itertools.product(
+                    *[
+                        [tuple(blur_marker) for blur_marker in facet_instructions[facet_index]['blur markers']]
+                        for facet_index in pair],
+                    (pair,)
                 )
-            ]
-        ])],
-        key=lambda item: item[3]
-    )
-    # except TypeError:
-    #     dialog_with_support('Error', 'Invalid configuration of blur distance markers (yellow pixels). These pixels must stay inside the UV shells.', ['I’ll fix it'], cb='I’ll fix it', db='I’ll fix it', icon='warning')
-    #     exit()
+                for pair in [
+                    (str(index_1), str(index_2))
+                    for index_1, index_2 in
+                    itertools.combinations(
+                        range(1, len(facet_instructions) + 1),
+                        2
+                    )
+                ]
+            ])],
+            key=lambda item: item[3]
+        )
+    except TypeError:
+        dialog_with_support('Error', 'Invalid configuration of blur distance markers (yellow pixels). These pixels must stay inside the UV shells.', ['I’ll fix it'], cb='I’ll fix it', db='I’ll fix it', icon='warning')
+        exit()
 
     selected_pairs = []
     while marker_pairs:
