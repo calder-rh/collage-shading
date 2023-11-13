@@ -45,7 +45,6 @@ def shading_node_makers(prefix, node_set, delete_setting):
                             addAttr(node, ln=parent_name + axis, at='float', parent=parent_name)
             else:
                 raise Exception('Attribute input must be a string or dict')
-        print(expr.format(this=name))
         node.setExpression(expr.format(this=name))
         node_set.add(node)
         return node
@@ -76,9 +75,6 @@ def shading_node_makers(prefix, node_set, delete_setting):
 
             node = shadingNode('floatMath', asUtility=True, name=name)
             node.operation.set(operation)
-
-            if node_name == 'scaled_luminance':
-                print('D' * 100, input2, type(input2), input2.type())
 
             if isinstance(input1, nodetypes.FloatMath):
                 input1.outFloat.connect(node.floatA)

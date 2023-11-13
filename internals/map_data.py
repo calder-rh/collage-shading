@@ -227,7 +227,6 @@ def make_map_data(image_path, data_path):
                 if neighbor_colors & set(range(-len(instruction_colors), 0)):
                     error(f'Instructions touching each other at x={x}, y={y}.')
                 num_neighbor_colors = len(neighbor_colors)
-                print(num_neighbor_colors, end=None)
                 if num_neighbor_colors == 0:
                     remaining_locations.add((y, x))
                 elif num_neighbor_colors > 1:

@@ -16,11 +16,7 @@ shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
 
 def is_palette(path):
     path = Path(path)
-    try:
-        rel_path = path.relative_to(shading_path('palettes'))
-    except TypeError:
-        print(path)
-        exit()
+    rel_path = path.relative_to(shading_path('palettes'))
     for part in rel_path.parts:
         if not re.fullmatch(palette_regex, part):
             return False

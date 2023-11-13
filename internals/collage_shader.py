@@ -54,7 +54,6 @@ class FacetShader(Network):
         world_placement = self.build(RigidWorldPlacement(context, obj, facet_center, facet_settings['object up']))
         if (facet_up := facet_settings['image up']) is not None:
             image_up = facet_up
-            print(image_up)
         else:
             image_up = palette.settings()['up']
         screen_placement = self.build(ScreenPlacement(context, world_placement, image_up))
