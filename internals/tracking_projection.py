@@ -8,7 +8,7 @@ class TrackingProjectionPlacement(Network):
     relevant_context = ['object', 'facet', 'image']
 
     def __init__(self, context, screen_placement, facet_image):
-        sc = ShadingController({})
+        sc = ShadingController()
 
         attrs = ['center_ss_x',
                  'center_ss_y',
@@ -113,7 +113,7 @@ class TrackingProjection(Network):
         # Set it to a perspective projection
         projection.projType.set(8)
         # From the desired camera
-        ShadingController({}).camera.camera_message.connect(projection.linkedCamera)
+        ShadingController().camera.camera_message.connect(projection.linkedCamera)
         # Set the image
         image_texture.outColor.connect(projection.image)
 

@@ -2,12 +2,8 @@ from pymel.core import *
 from internals.network import Network
 
 
-class ShadingController(Network):
-    relevant_context = []
-    prefix = None
-    delete = False
-
-    def __init__(self, _):
+class ShadingController:
+    def __init__(self):
         sc_name = 'shading_controller'
         rscs_name = 'ref_shading_controllers'
 
@@ -33,7 +29,6 @@ class ShadingController(Network):
             self.camera = node.camera
             self.aspect_ratio = node.aspect_ratio
             self.luminance_factor = node.luminance_factor
-            print('a', self.luminance_factor)
 
             ref_shading_controllers = ls(regex=f'[^:]+:({sc_name}|{rscs_name})')
             if ref_shading_controllers:
@@ -43,9 +38,7 @@ class ShadingController(Network):
             
             direct_ref_shading_controllers = ls(regex=f'[^:]+:{sc_name}')
             if direct_ref_shading_controllers:
-                print('A' * 100)
                 for sc in direct_ref_shading_controllers:
-                    print(sc, '*' * 100)
                     for attr in ['camera_message',
                                  'world_matrix',
                                  'inverse_world_matrix',
