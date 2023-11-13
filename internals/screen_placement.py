@@ -71,7 +71,7 @@ float $facet_center_ss_x = focal_length_factor * facet_center_cs_x / $facet_cent
 float $facet_center_ss_y = focal_length_factor * facet_center_cs_y / $facet_center_cs_z;
 vector $facet_center_ss = <<$facet_center_ss_x, $facet_center_ss_y>>;
 
-float $scale_ss = 300 / $facet_center_cs_z;
+float $scale_ss = 100 / $facet_center_cs_z;
 
 float $orienter_cs_z = -orienter_cs_z;
 float $orienter_ss_x = focal_length_factor * orienter_cs_x / $orienter_cs_z;
