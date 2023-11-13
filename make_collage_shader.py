@@ -10,8 +10,8 @@ import subprocess
 from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support
 importlib.reload(network)
 importlib.reload(shading_path)
-importlib.reload(collage_shader)
 importlib.reload(shading_controller)
+importlib.reload(collage_shader)
 importlib.reload(tracking_projection)
 importlib.reload(coordinate_converter)
 importlib.reload(surface_values)
