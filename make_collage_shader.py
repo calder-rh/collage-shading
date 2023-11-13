@@ -85,7 +85,7 @@ if map_data['anti-aliasing warning']:
     else:
         map_data['anti-aliasing warning'] = False
 
-facet_borders_changed = map_data_status != 'nonexistent' and original_map_data['pixels'] != map_data['pixels']
+facet_borders_changed = map_data_status != 'nonexistent' and (('pixels' in original_map_data != 'pixels' in map_data) or ('pixels' in original_map_data and 'pixels' in map_data and original_map_data['pixels'] != map_data['pixels']))
 blur_markers_changed = map_data_status != 'nonexistent' and [facet['blur markers'] for facet in original_map_data['facets'].values()] != [facet['blur markers'] for facet in map_data['facets'].values()]
 
 masks_exist = masks_path.exists() and any(file.suffix == '.png' for file in masks_path.iterdir())
