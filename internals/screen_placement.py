@@ -15,7 +15,7 @@ class FocalLengthFactor(Network):
         expr = f'focal_length_factor = focal_length / (horizontal_aperture * {millimeters_per_inch});'
         node = self.expression('focal_length_factor', attrs, expr)
         
-        sc = self.build(ShadingController())
+        sc = ShadingController()
         sc.camera.horizontal_aperture >> node.horizontal_aperture
         sc.camera.focal_length >> node.focal_length        
 
@@ -26,7 +26,7 @@ class ScreenPlacement(Network):
     relevant_context = ['object', 'facet']
     
     def __init__(self, context, world_placement, image_up):
-        sc = self.build(ShadingController())
+        sc = ShadingController
         flf = self.build(FocalLengthFactor({}))
 
         # Find the location of the object in the space of the camera
