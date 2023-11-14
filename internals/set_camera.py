@@ -1,5 +1,10 @@
 from pymel.core import *
 
+import importlib
+from internals import network, shading_controller
+importlib.reload(network)
+importlib.reload(shading_controller)
+
 from internals.shading_controller import ShadingController
 
 

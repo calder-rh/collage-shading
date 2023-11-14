@@ -92,8 +92,8 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
         max_blur_size = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d) ** 0.5 * default_blur_size_ratio
         one_size = True
     
-    print(one_size, 'X' * 100)
-    
+    print(max_blur_size, 'Y' * 100)
+        
     def blur_samples(blur_size):
         blur_radius = blur_size / 2
         cube_coord = 0.35 * blur_radius

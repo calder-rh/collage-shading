@@ -1,5 +1,11 @@
 from pymel.core import *
 
+import importlib
+from internals import shading_path, palettes, dialog_with_support
+importlib.reload(shading_path)
+importlib.reload(palettes)
+importlib.reload(dialog_with_support)
+
 from internals.shading_path import shading_path
 from internals import palettes
 from internals.dialog_with_support import dialog_with_support
