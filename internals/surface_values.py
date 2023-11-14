@@ -136,7 +136,6 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
                     if sample_facet_index not in sample_facet_counts:
                         sample_facet_counts[sample_facet_index] = 0
                     sample_facet_counts[sample_facet_index] += 1
-                print(sample_facet_counts)
                 return sample_facet_counts
             
             # A function that takes these counts and calculates the blur values based on them
@@ -149,6 +148,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
             
             # If there’s only one blur size, or there’s only one facet, then just go with this
             if one_size or len(maximum_blur_facet_counts) == 1:
+                print('hi')
                 record_blur_contributions(maximum_blur_facet_counts)
                 continue
 
