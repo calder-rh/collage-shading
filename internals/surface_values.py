@@ -93,7 +93,6 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
         one_size = True
             
     def blur_samples(blur_size):
-        print(blur_size)
         blur_radius = blur_size / 2
         cube_coord = 0.35 * blur_radius
         octahedron_coord = 1 * blur_radius
@@ -137,6 +136,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
                     if sample_facet_index not in sample_facet_counts:
                         sample_facet_counts[sample_facet_index] = 0
                     sample_facet_counts[sample_facet_index] += 1
+                print(sample_facet_counts)
                 return sample_facet_counts
             
             # A function that takes these counts and calculates the blur values based on them
