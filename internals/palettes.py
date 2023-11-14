@@ -98,7 +98,7 @@ class ImagesPalette(Palette):
         return {
             'up': 'The image will rotate so that this direction is pointing in the same direction as the object’s up vector. Measured clockwise from the top.',
             'shades': 'A list of all the shades that make up this palette, arranged from dark to light, with settings for each one. Here is a description of each setting:',
-            'luminance': 'How much light should be hitting the surface to make this shade show up. (Between 0 and 1)',
+            'luminance': 'How much light should be hitting the surface to make this shade show up. Can be a list of two numbers indicating a region on the ramp to use for this shade. (Between 0 and 1)',
             'expected name': 'What the filename of this shade file probably starts with, if you’re counting from 0. For reference only.'
         }
         
@@ -106,7 +106,10 @@ class ImagesPalette(Palette):
         num_shades = len(self.images)
         shade_settings = []
         for i in range(num_shades):
-            ratio = i / (num_shades - 1)
+            if num_shades == 1:
+                ratio = 0.5
+            else:
+                ratio = i / (num_shades - 1)
             shade_settings.append({'luminance': ratio, 'expected name': f's{i}'})
         return shade_settings
     
@@ -142,13 +145,16 @@ class GradientPalette(Palette):
             'up': 'The image will rotate so that this direction is pointing in the same direction as the object’s up vector. Measured clockwise from the top.',
             'shades': f'A list of all the parts of the gradient image that make up this palette, arranged from dark to light, with settings for each one. There are {default_num_shades} by default, but you can add or remove them. Here is a description of each setting:',
             'y': 'The y coordinate within the gradient image that is used for this shade. (0 = bottom, 1 = top, within the region allowed by the edge distance instructions.)',
-            'luminance': 'How much light should be hitting the surface to make this shade show up. (Between 0 and 1)'
+            'luminance': 'How much light should be hitting the surface to make this shade show up. Can be a list of two numbers indicating a region on the ramp to use for this shade. (Between 0 and 1)'
         }
     
     def _default_shade_settings(self, num_shades=default_num_shades):
         shade_settings = []
         for i in range(num_shades):
-            ratio = i / (num_shades - 1)
+            if num_shades == 1:
+                ratio = 0.5
+            else:
+                ratio = i / (num_shades - 1)
             shade_settings.append({'luminance': ratio, 'y': ratio})
         return shade_settings
     
