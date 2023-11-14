@@ -4,7 +4,7 @@ import json
 import itertools
 from internals.dialog_with_support import dialog_with_support
 
-default_blur_size_ratio = 0.05
+default_blur_size_ratio = 0.1
 
 
 def vector_sum(p, q):
@@ -128,10 +128,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
 
             # A function that gets a dict of each facet that shows up in the samples of a given size, along with their counts
             def find_sample_facets(blur_size):
-                print(blur_size)
                 sample_facet_counts = {center_facet_index: 1}
-                bss = blur_samples(blur_size)
-                print(bss)
                 for bs in blur_samples(blur_size):
                     sample_xyz = vector_sum(center_xyz, bs)
                     sample_px, sample_py = converter.xyz_to_pixel(sample_xyz, map_resolution)
