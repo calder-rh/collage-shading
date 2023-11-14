@@ -128,7 +128,10 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
 
             # A function that gets a dict of each facet that shows up in the samples of a given size, along with their counts
             def find_sample_facets(blur_size):
+                print(blur_size)
                 sample_facet_counts = {center_facet_index: 1}
+                bss = blur_samples(blur_size)
+                print(bss)
                 for bs in blur_samples(blur_size):
                     sample_xyz = vector_sum(center_xyz, bs)
                     sample_px, sample_py = converter.xyz_to_pixel(sample_xyz, map_resolution)
@@ -148,7 +151,6 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
             
             # If there’s only one blur size, or there’s only one facet, then just go with this
             if one_size or len(maximum_blur_facet_counts) == 1:
-                print('hi')
                 record_blur_contributions(maximum_blur_facet_counts)
                 continue
 
