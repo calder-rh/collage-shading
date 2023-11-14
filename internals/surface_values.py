@@ -4,7 +4,7 @@ import json
 import itertools
 from internals.dialog_with_support import dialog_with_support
 
-default_blur_size_ratio = 0.1
+default_blur_size_ratio = 0.05
 
 
 def vector_sum(p, q):
@@ -88,8 +88,11 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
         max_blur_size = list(blur_sizes)[0]
         one_size = True
     else:
-        bounding_box = obj.getTransform().boundingBox()
-        max_blur_size = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d) ** 0.5 * default_blur_size_ratio
+        trans = obj.getTransform()
+        bounding_box = trans.boundingBox()
+        bb_diagonal = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d) ** 0.5
+        average_scale = (trans.sx ** 2 + trans.sy ** 2 + trans.sz) ** 0.5
+        max_blur_size = default_blur_size_ratio * bb_diagonal / average_scale
         one_size = True
             
     def blur_samples(blur_size):
