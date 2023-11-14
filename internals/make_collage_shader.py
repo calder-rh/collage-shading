@@ -86,7 +86,7 @@ def run():
 
     masks_exist = masks_path.exists() and any(file.suffix == '.png' for file in masks_path.iterdir())
 
-    num_facets = len(map_data['facets'])
+    num_facets = len((original_map_data if map_data_status == 'up to date' else map_data)['facets'])
     if num_facets > 1 and (not masks_exist or facet_borders_changed or blur_markers_changed):
         if masks_exist:
             rmtree(masks_path, ignore_errors=True)
