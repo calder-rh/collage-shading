@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 from palettes import test_indices
 
-gray = (127,) * 3
 white = (255, 255, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
@@ -186,9 +185,6 @@ def make_map_data(image_path, data_path):
     if height != width:
         error('The image must be square.')
     resolution = height
-
-    if any(np.array_equal(pixel, gray) for pixel in image.reshape([1, -1, 3])[0]):
-        error('It looks like you forgot to hide the UVs in the map image.')
 
     color_indices = {white: 0}
     color_counts = {white: 0}

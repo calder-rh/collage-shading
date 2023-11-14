@@ -44,7 +44,8 @@ class ScreenPlacement(Network):
         sc.camera.inverse_world_matrix >> orienter_cs.inMatrix
         world_placement.rotation_ws >> orienter_cs.inPoint
 
-        attrs = ['obj_center_cs_x',
+        attrs = ['obj_size',
+                 'obj_center_cs_x',
                  'obj_center_cs_y',
                  'obj_center_cs_z',
                  'facet_center_cs_x',
@@ -71,7 +72,7 @@ float $facet_center_ss_x = focal_length_factor * facet_center_cs_x / $facet_cent
 float $facet_center_ss_y = focal_length_factor * facet_center_cs_y / $facet_center_cs_z;
 vector $facet_center_ss = <<$facet_center_ss_x, $facet_center_ss_y>>;
 
-float $scale_ss = 100 / $facet_center_cs_z;
+float $scale_ss = obj_size / $facet_center_cs_z;
 
 float $orienter_cs_z = -orienter_cs_z;
 float $orienter_ss_x = focal_length_factor * orienter_cs_x / $orienter_cs_z;
@@ -86,6 +87,7 @@ rotation = $angle_ss;
 scale = $scale_ss;
 """
         node = self.expression('screen_placement', attrs, expr)
+        node.obj_size.set(world_placement.obj_size)
         obj_center_cs.outputX >> node.obj_center_cs_x
         obj_center_cs.outputY >> node.obj_center_cs_y
         obj_center_cs.outputZ >> node.obj_center_cs_z
