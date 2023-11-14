@@ -90,11 +90,12 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     else:
         trans = obj.getTransform()
         bounding_box = trans.boundingBox()
-        bb_diagonal = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d) ** 0.5
-        average_scale = (trans.sx.get() ** 2 + trans.sy.get() ** 2 + trans.sz.get()) ** 0.5
-        max_blur_size = default_blur_size_ratio * bb_diagonal / average_scale
+        bb_diagonal = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d ** 2) ** 0.5
+        # average_scale = (trans.sx.get() ** 2 + trans.sy.get() ** 2 + trans.sz.get()) ** 0.5
+        # max_blur_size = default_blur_size_ratio * bb_diagonal / average_scale
+        max_blur_size = default_blur_size_ratio * bb_diagonal
         print(max_blur_size)
-        exit()
+        # exit()
         one_size = True
             
     def blur_samples(blur_size):
