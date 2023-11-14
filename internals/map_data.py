@@ -176,6 +176,8 @@ class FacetInstructions:
 
 def make_map_data(image_path, data_path):
     image_path = Path(image_path)
+    if image_path.suffix == '.psd':
+        error('Sorry, this program cannot read Photoshop files.')
     original_image = Image.open(image_path).convert('RGBA')
     image_on_white = Image.new('RGBA', original_image.size, 'WHITE')
     image_on_white.paste(original_image, (0, 0), original_image)
