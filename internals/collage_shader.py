@@ -7,7 +7,6 @@ from internals.tracking_projection import TrackingProjection
 from internals.shading_controller import ShadingController
 import json
 
-solid_region = 0.02
 noise_scale = 1000
 noise_adjustment = 0.1
 
@@ -65,9 +64,8 @@ class FacetShader(Network):
         for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):
             start_index = 2 * shade_index
             end_index = start_index + 1
-            adjusted_luminance_value = solid_region / 2 + luminance_value * (1 - solid_region)
-            shade_ramp.ramp[start_index].ramp_Position.set(adjusted_luminance_value - solid_region / 2)
-            shade_ramp.ramp[end_index].ramp_Position.set(adjusted_luminance_value + solid_region / 2)
+            shade_ramp.ramp[start_index].ramp_Position.set(luminance_value[0])
+            shade_ramp.ramp[end_index].ramp_Position.set(luminance_value[1])
 
             tracking_projection_context = context | {'image': f'shade{shade_index}'}
             tracking_projection = self.build(TrackingProjection(tracking_projection_context, screen_placement, facet_image, isinstance(palette, palettes.ImagesPalette)), add_keys=False)

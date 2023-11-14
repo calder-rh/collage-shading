@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from random import uniform
 
 
+solid_region = 0.02
 default_num_shades = 5
 palette_regex = r'(\d+)(?!.*\.json).*'
 shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
@@ -120,7 +121,13 @@ class ImagesPalette(Palette):
         y = uniform(vertical_edge_distance, 1 - vertical_edge_distance)
         for image, setting in zip(self.images, settings['shades']):
             self.facet_images.append(FacetImage(image, x, y, scale))
-            self.luminance_values.append(setting['luminance'])
+            luminance =  setting['luminance']
+            if isinstance(luminance, list):
+                self.luminance_values.append(luminance)
+            else:
+                luminance_start = luminance * (1 - solid_region)
+                luminance_end = luminance_start + solid_region
+                self.luminance_values.append([luminance_start, luminance_end])
 
 
 class GradientPalette(Palette):
