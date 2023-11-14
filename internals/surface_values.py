@@ -88,9 +88,12 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
         max_blur_size = list(blur_sizes)[0]
         one_size = True
     else:
+        print('X' * 100)
         bounding_box = obj.getTransform().boundingBox()
         max_blur_size = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d) ** 0.5 * default_blur_size_ratio
         one_size = True
+    
+    print(one_size)
 
     def blur_samples(blur_size):
         blur_radius = blur_size / 2
@@ -148,8 +151,6 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
             
             # If there’s only one blur size, or there’s only one facet, then just go with this
             if one_size or len(maximum_blur_facet_counts) == 1:
-                print(max_blur_size)
-                exit()
                 record_blur_contributions(maximum_blur_facet_counts)
                 continue
 

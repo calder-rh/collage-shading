@@ -4,5 +4,10 @@ from pathlib import Path
 code_path = str(Path(workspace(q=True, rd=True)) / 'shading' / 'fantasy' / 'code')
 if code_path not in sys.path:
     sys.path.append(code_path)
+
+import importlib
+from internals import shading_path
+importlib.reload(shading_path)
+
 from internals import make_uv_file
 make_uv_file.run()

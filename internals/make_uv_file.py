@@ -1,7 +1,7 @@
-import sys
 from pymel.core import *
 
 from internals.shading_path import shading_path
+
 import sys, subprocess
 
 

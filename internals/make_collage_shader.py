@@ -1,26 +1,14 @@
-import importlib
 from pymel.core import *
 
-import subprocess
-from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support
-importlib.reload(network)
-importlib.reload(shading_path)
-importlib.reload(shading_controller)
-importlib.reload(collage_shader)
-importlib.reload(tracking_projection)
-importlib.reload(coordinate_converter)
-importlib.reload(surface_values)
-importlib.reload(palettes)
-importlib.reload(world_placement)
-importlib.reload(screen_placement)
-importlib.reload(dialog_with_support)
 from internals.dialog_with_support import dialog_with_support
 from internals.shading_path import shading_path
 from internals.surface_values import calculate_surface_values
 from internals.collage_shader import CollageShader
+
 from pathlib import Path
 from shutil import rmtree
 import json
+import subprocess
 from enum import Enum
 
 
