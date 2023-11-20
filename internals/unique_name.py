@@ -1,5 +1,6 @@
 from pymel.core import *
+import re
 
 
 def unique_name(obj):
-    return obj.name().replace('|', '_')
+    return re.sub('^_', 'S_', obj.name().replace('|', '_'))
