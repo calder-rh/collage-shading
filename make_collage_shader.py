@@ -6,7 +6,7 @@ if code_path not in sys.path:
     sys.path.append(code_path)
 
 import importlib
-from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, make_collage_shader
+from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, make_collage_shader, unique_name
 importlib.reload(network)
 importlib.reload(shading_path)
 importlib.reload(shading_controller)
@@ -19,6 +19,7 @@ importlib.reload(screen_placement)
 importlib.reload(tracking_projection)
 importlib.reload(dialog_with_support)
 importlib.reload(make_collage_shader)
+importlib.reload(unique_name)
 
 from internals import make_collage_shader
 make_collage_shader.run()

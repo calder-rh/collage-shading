@@ -1,7 +1,7 @@
 from pymel.core import *
 
 import importlib
-from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, make_collage_shader
+from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, make_collage_shader, unique_name
 importlib.reload(network)
 importlib.reload(shading_path)
 importlib.reload(shading_controller)
@@ -14,11 +14,13 @@ importlib.reload(screen_placement)
 importlib.reload(tracking_projection)
 importlib.reload(dialog_with_support)
 importlib.reload(make_collage_shader)
+importlib.reload(unique_name)
 
 from internals.dialog_with_support import dialog_with_support
 from internals.shading_path import shading_path
 from internals.surface_values import calculate_surface_values
 from internals.collage_shader import CollageShader
+from internals.unique_name import unique_name
 
 from pathlib import Path
 from shutil import rmtree
@@ -135,4 +137,4 @@ def run():
             obj = node
         else:
             continue
-        CollageShader({'object': obj.name()}, obj, map_image_path)
+        CollageShader({'object': unique_name(obj)}, obj, map_image_path)
