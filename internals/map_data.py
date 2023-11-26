@@ -25,6 +25,31 @@ def error(msg):
     exit(1)
 
 
+def group_and_count(locations):
+    group_parents = {location: location for location in locations}
+
+    for (y, x) in group_parents:
+        for dy, dx in [(1, 0), (0, 1)]:
+            ny = y + dy
+            nx = x + dx
+            if (ny, nx) in group_parents:
+                group_parents[(ny, nx)] = group_parents[(y, x)]
+
+    group_representatives = {}
+    for location in group_parents:
+        last_parent = None
+        this_parent = location
+        while this_parent != last_parent:
+            last_parent = this_parent
+            this_parent = group_parents[this_parent]
+        group_representatives[location] = this_parent
+    
+    groups = [[location for location in locations if group_representatives[location] == representative] for representative in set(group_representatives.values())]
+    
+    indices = [len(group) for group in sorted(groups, key = lambda group: sum([y + x for y, x in group]) / len(group))]
+    return indices
+
+
 class FacetInstructions:
     def __init__(self, color_index, color):
         self.color_index = color_index
@@ -36,6 +61,7 @@ class FacetInstructions:
         self.image_up = None
         self.scale = None
         self.edge_distance = None
+        self.orienter = None
         self.blur_markers = None
 
     def error(self, msg):
@@ -52,26 +78,8 @@ class FacetInstructions:
         if not locations:
             return
         
-        group_parents = {location: location for location in locations}
-        for (y, x) in group_parents:
-            for dy, dx in [(1, 0), (0, 1)]:
-                ny = y + dy
-                nx = x + dx
-                if (ny, nx) in group_parents:
-                    group_parents[(ny, nx)] = group_parents[(y, x)]
+        path_indices = group_and_count(locations)
 
-        group_representatives = {}
-        for location in group_parents:
-            last_parent = None
-            this_parent = location
-            while this_parent != last_parent:
-                last_parent = this_parent
-                this_parent = group_parents[this_parent]
-            group_representatives[location] = this_parent
-        
-        groups = [[location for location in locations if group_representatives[location] == representative] for representative in set(group_representatives.values())]
-        
-        path_indices = [len(group) for group in sorted(groups, key = lambda group: sum([y + x for y, x in group]) / len(group))]
         if not test_indices(path_indices):
             self.error(f'There is no palette at a path corresponding to the indices {path_indices}.')
         self.palette_path_indices = path_indices
@@ -162,6 +170,13 @@ class FacetInstructions:
         vertical_edge_distance = min(ratio_from_top, 1 - ratio_from_top)
         self.edge_distance = [horizontal_edge_distance, vertical_edge_distance]
     
+    def interpret_orienter(self):
+        locations = self.instruction_pixels[cyan]
+        if not locations:
+            return
+        
+        self.orienter = group_and_count(locations)
+    
     def interpret_blur_markers(self):
         self.blur_markers = list(self.instruction_pixels[yellow])
     
@@ -171,6 +186,7 @@ class FacetInstructions:
         self.interpret_image_up()
         self.interpret_scale()
         self.interpret_edge_distance()
+        self.interpret_orienter()
         self.interpret_blur_markers()
 
 
@@ -251,7 +267,13 @@ def make_map_data(image_path, data_path):
                 error(f'No specified palette for region of color r={facet.color[0]}, g={facet.color[1]}, b={facet.color[2]}.')
             facet.palette_path_indices = white_palette_path_indices
 
-        for attr_name, default_value in ('object_up', [0, 1, 0]), ('image_up', None), ('scale', 1), ('edge_distance', [0.1, 0.1]), ('blur_markers', []):
+        defaults = [('object_up', [0, 1, 0]),
+                    ('image_up', None),
+                    ('scale', 1),
+                    ('edge_distance', [0.1, 0.1]),
+                    ('orienter', None)
+                    ('blur_markers', [])]
+        for attr_name, default_value in defaults:
             if getattr(facet, attr_name) is None:
                 white_value = getattr(white_region, attr_name)
                 if white_value is not None:
@@ -263,6 +285,7 @@ def make_map_data(image_path, data_path):
     all_facet_instructions_data = {}
     for facet_instructions in all_facet_instructions[1:]:
         facet_instructions_data = {'palette': facet_instructions.palette_path_indices,
+                                   'orienter': facet_instructions.orienter,
                                    'object up': facet_instructions.object_up,
                                    'image up': facet_instructions.image_up,
                                    'scale': facet_instructions.scale,

@@ -5,10 +5,16 @@ from internals.world_placement import RigidWorldPlacement
 from internals.screen_placement import ScreenPlacement
 from internals.tracking_projection import TrackingProjection
 from internals.shading_controller import ShadingController
-import json
+from internals.dialog_with_support import dialog_with_support
+import json, re
 
 noise_scale = 1000
 noise_adjustment = 0.1
+
+
+def error(title, message):
+    dialog_with_support(title, message, ['I’ll fix it'], cb='I’ll fix it', db='I’ll fix it', icon='warning')
+    exit()
 
 
 class Luminance(Network):
@@ -72,7 +78,31 @@ class FacetShader(Network):
         palette = palettes.get_palette(facet_settings['palette'])
         palette.make(facet_settings['scale'], facet_settings['edge distance'])
 
-        world_placement = self.build(RigidWorldPlacement(context, obj, facet_center, facet_settings['object up']))
+        orienter_settings = facet_settings['orienter']
+        if orienter_settings is None:
+            world_placement = self.build(RigidWorldPlacement(context, obj, facet_center, facet_settings['object up']))
+
+        else:
+            if not objExists('facet_orienters'):
+                error('No orienter group', 'Facet orienters must be in a group called facet_orienters')
+
+            current_obj = PyNode('facet_orienters')
+            for index, number in enumerate(orienter_settings):
+                next_number_regex = '\D' + str(number) + '$'
+                children = listRelatives(current_obj, children=True)
+                matching_children = [child for child in children if re.search(next_number_regex, child.name())]
+                num_matches = len(matching_children)
+                if num_matches == 0:
+                    error('Invalid orienter specification', f'There is no orienter matching {orienter_settings}.')
+                if num_matches > 1:
+                    error('Invalid orienter specification', f'There may be more than one orienter matching {orienter_settings}.')
+                current_obj = matching_children[0]
+                is_group = current_obj.getShape() is None
+                if is_group != (index < len(orienter_settings) - 1):
+                    error('Invalid orienter specification', f'The numbers {orienter_settings} do not match an orienter.')
+            
+            world_placement = self.build(RigidWorldPlacement(context, current_obj, (0, 0, 0), facet_settings['object up']))
+
         if (facet_up := facet_settings['image up']) is not None:
             image_up = facet_up
         else:

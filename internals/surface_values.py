@@ -106,7 +106,13 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
 
     num_facets = len(facet_instructions)
     blur_values = [[[0 for _ in range(blur_resolution)] for _ in range(blur_resolution)] for _ in range(num_facets)]
-    facet_center_sums = [[[0, 0, 0], 0] for _ in range(num_facets)]
+
+    facet_center_sums = []
+    for facet in facet_instructions:
+        if facet['orienter'] is None:
+            facet_center_sums.append([[0, 0, 0], 0])
+        else:
+            facet_center_sums.append(None)
 
     progress_window = window(t='Generating mask images…')
     columnLayout()
@@ -128,8 +134,9 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
             center_facet_index = pixels[facet_py][facet_px] - 1
             # Add this point to the sum of all the points in this facet
             facet_center_sum = facet_center_sums[center_facet_index]
-            facet_center_sum[0] = vector_sum(facet_center_sum[0], center_xyz)
-            facet_center_sum[1] += 1
+            if facet_center_sum is not None:
+                facet_center_sum[0] = vector_sum(facet_center_sum[0], center_xyz)
+                facet_center_sum[1] += 1
 
             # A function that gets a dict of each facet that shows up in the samples of a given size, along with their counts
             def find_sample_facets(blur_size):
@@ -166,7 +173,13 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
 
             record_blur_contributions(find_sample_facets(blur_size))
     
-    facet_centers = [[c / count for c in total] for total, count in facet_center_sums]
+    facet_centers = []
+    for item in facet_center_sums:
+        if item is None:
+            facet_centers.append(None)
+        else:
+            total, count = item
+            facet_centers.append([c / count for c in total])
 
     data = {}
     data['facet centers'] = facet_centers
