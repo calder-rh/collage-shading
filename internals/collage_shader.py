@@ -68,8 +68,8 @@ class Luminance(Network):
         base >> abs_base.input
         sign_base = self.divide(base, abs_base.output, 'sign_base')
 
-        exponent_step_rfrm1 = self.subtract(remapped_facing_ratio.outValue, 1, 'exponent_step_rfrm1')
-        exponent = self.divide(1, exponent_step_rfrm1, 'exponent')
+        exponent_step_1_over_rfr = self.divide(1, remapped_facing_ratio.outValue, 'exponent_step_1_over_rfr')
+        exponent = self.subtract(exponent_step_1_over_rfr, 1, 'exponent')
 
         power = self.power(abs_base.output, exponent, 'power')
         signed_power = self.multiply(sign_base, power, 'signed_power')
