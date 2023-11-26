@@ -37,24 +37,47 @@ class Luminance(Network):
         adjusted_noise.outputMax.set(noise_adjustment)
         noise_projection.outColorR >> adjusted_noise.inputValue
 
-        attrs = ['raw_luminance',
-                 'luminance_factor',
-                 'noise',
-                 'facing_ratio',
-                 'out_value']
-        expr = """
-float $noisy_luminance = luminance_factor * raw_luminance + noise;
-float $remapped_fr = (1 - facing_ratio) * 0.95 + facing_ratio * 0.2;
-float $base = 2 * $noisy_luminance - 1;
-out_value = (sign($base) * pow(abs($base), (1 / $remapped_fr - 1)) + 1) / 2;
-"""
-        adjusted_luminance = self.expression('adjusted_luminance', attrs, expr)
-        raw_luminance.outValue >> adjusted_luminance.raw_luminance
-        sc.luminance_factor >> adjusted_luminance.luminance_factor
-        adjusted_noise.outValue >> adjusted_luminance.noise
-        facing_ratio.outValue >> adjusted_luminance.facing_ratio
+#         attrs = ['raw_luminance',
+#                  'luminance_factor',
+#                  'noise',
+#                  'facing_ratio',
+#                  'out_value']
+#         expr = """
+# float $noisy_luminance = luminance_factor * raw_luminance + noise;
+# float $remapped_fr = (1 - facing_ratio) * 0.95 + facing_ratio * 0.2;
+# float $base = 2 * $noisy_luminance - 1;
+# out_value = (sign($base) * pow(abs($base), (1 / $remapped_fr - 1)) + 1) / 2;
+# """
+#         adjusted_luminance = self.expression('adjusted_luminance', attrs, expr)
+#         raw_luminance.outValue >> adjusted_luminance.raw_luminance
+#         sc.luminance_factor >> adjusted_luminance.luminance_factor
+#         adjusted_noise.outValue >> adjusted_luminance.noise
+#         facing_ratio.outValue >> adjusted_luminance.facing_ratio
 
-        self.luminance = adjusted_luminance.out_value
+        adjusted_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'adjusted_luminance')
+        noisy_luminance = self.add(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
+        
+        remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
+        remapped_facing_ratio.outputMin.set(0.95)
+        remapped_facing_ratio.outputMax.set(0.2)
+        facing_ratio.outValue >> remapped_facing_ratio.inputValue
+
+        base_step_2nl = self.multiply(2, noisy_luminance, 'base_step_2nl')
+        base = self.subtract(base_step_2nl, 1, 'base')
+        abs_base = self.utility('absolute', 'abs_base')
+        base >> abs_base.input
+        sign_base = self.divide(base, abs_base, 'sign_base')
+
+        exponent_step_rfrm1 = self.subtract(remapped_facing_ratio, 1, 'exponent_step_rfrm1')
+        exponent = self.divide(1, exponent_step_rfrm1, 'exponent')
+
+        power = self.power(abs_base, exponent, 'power')
+        signed_power = self.multiply(sign_base, power, 'signed_power')
+
+        signed_power_plus_1 = self.add(signed_power, 1, 'signed_power_plus_1')
+        signed_power_plus_1_over_2 = self.divide(signed_power_plus_1, 2, 'signed_power_plus_1_over_2')
+
+        self.luminance = signed_power_plus_1_over_2
 
 
 class FacetShader(Network):

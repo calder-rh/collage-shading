@@ -98,6 +98,7 @@ def shading_node_makers(prefix, node_set, delete_setting):
     node_makers['subtract'] = generic_float_math_node_maker(1)
     node_makers['multiply'] = generic_float_math_node_maker(2)
     node_makers['divide'] = generic_float_math_node_maker(3)
+    node_makers['power'] = generic_float_math_node_maker(6)
 
     return node_makers
 
