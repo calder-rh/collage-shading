@@ -93,7 +93,7 @@ def run():
             else:
                 new_map_data['anti-aliasing warning'] = False
 
-    facet_borders_changed = map_data_status == MapDataStatus.nonexistent or (map_data_status == MapDataStatus.out_of_date and (('pixels' in original_map_data != 'pixels' in new_map_data) or ('pixels' in original_map_data and 'pixels' in new_map_data and original_map_data['pixels'] != new_map_data['pixels'])))
+    facet_borders_changed = map_data_status == MapDataStatus.nonexistent or (map_data_status == MapDataStatus.out_of_date and ((('pixels' in original_map_data) != ('pixels' in new_map_data)) or ('pixels' in original_map_data and 'pixels' in new_map_data and original_map_data['pixels'] != new_map_data['pixels'])))
     blur_markers_changed = map_data_status == MapDataStatus.nonexistent or (map_data_status == MapDataStatus.out_of_date and [facet['blur markers'] for facet in original_map_data['facets'].values()] != [facet['blur markers'] for facet in new_map_data['facets'].values()])
 
     print(map_data_status)
