@@ -59,7 +59,7 @@ class Luminance(Network):
         
         remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
         remapped_facing_ratio.outputMin.set(0.95)
-        remapped_facing_ratio.outputMax.set(0.2)
+        remapped_facing_ratio.outputMax.set(0.05)
         facing_ratio.outValue >> remapped_facing_ratio.inputValue
 
         base_step_2nl = self.multiply(2, noisy_luminance, 'base_step_2nl')
