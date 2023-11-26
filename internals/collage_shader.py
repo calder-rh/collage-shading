@@ -40,13 +40,12 @@ class Luminance(Network):
         attrs = ['raw_luminance',
                  'luminance_factor',
                  'noise',
-                 'facing_ratio'
+                 'facing_ratio',
                  'out_value']
         expr = """
 float $noisy_luminance = luminance_factor * raw_luminance + noise;
 float $remapped_fr = (1 - facing_ratio) * 0.95 + facing_ratio * 0.2;
-float $result = (pow((2 * $noisy_luminance - 1), (1 / $remapped_fr - 1)) + 1) / 2;
-out_value = $result;
+out_value = (pow((2 * $noisy_luminance - 1), (1 / $remapped_fr - 1)) + 1) / 2;
 """
         adjusted_luminance = self.expression('adjusted_luminance', attrs, expr)
         raw_luminance.outValue >> adjusted_luminance.raw_luminance
