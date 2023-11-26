@@ -3,7 +3,7 @@ from internals.coordinate_converter import CoordinateConverter
 import json
 import itertools
 from internals.dialog_with_support import dialog_with_support
-from internals.unique_name import unique_name
+from internals.unique_name import format_unique_name
 
 default_blur_size_ratio = 0.05
 
@@ -20,7 +20,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     if masks_exist and surface_values_path.exists():
         return surface_values_path
 
-    converter = CoordinateConverter({'object': unique_name(obj)}, obj)
+    converter = CoordinateConverter({'object': format_unique_name(obj)}, obj)
 
     with open(map_data_path) as file:
         map_data = json.load(file)

@@ -20,7 +20,7 @@ from internals.dialog_with_support import dialog_with_support
 from internals.shading_path import shading_path
 from internals.surface_values import calculate_surface_values
 from internals.collage_shader import CollageShader
-from internals.unique_name import unique_name
+from internals.unique_name import format_unique_name
 
 from pathlib import Path
 from shutil import rmtree
@@ -137,4 +137,4 @@ def run():
             obj = node
         else:
             continue
-        CollageShader({'object': unique_name(obj)}, obj, map_image_path)
+        CollageShader({'object': format_unique_name(obj)}, obj, map_image_path)

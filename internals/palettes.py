@@ -111,7 +111,7 @@ class ImagesPalette(Palette):
             else:
                 ratio = i / (num_shades - 1)
             shade_number = re.fullmatch(shade_regex, image_file.name).group(1)
-            shade_settings.append({'luminance': ratio, 'filename prefix': f's{shade_number}'})
+            shade_settings.append({'filename prefix': f's{shade_number}', 'luminance': ratio})
         return shade_settings
     
     def make(self, scale, edge_distance):
