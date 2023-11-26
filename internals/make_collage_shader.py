@@ -96,10 +96,6 @@ def run():
     facet_borders_changed = map_data_status == MapDataStatus.nonexistent or (map_data_status == MapDataStatus.out_of_date and ((('pixels' in original_map_data) != ('pixels' in new_map_data)) or ('pixels' in original_map_data and 'pixels' in new_map_data and original_map_data['pixels'] != new_map_data['pixels'])))
     blur_markers_changed = map_data_status == MapDataStatus.nonexistent or (map_data_status == MapDataStatus.out_of_date and [facet['blur markers'] for facet in original_map_data['facets'].values()] != [facet['blur markers'] for facet in new_map_data['facets'].values()])
 
-    print(map_data_status)
-    print(facet_borders_changed)
-    print(blur_markers_changed)
-
     masks_exist = masks_path.exists() and any(file.suffix == '.png' for file in masks_path.iterdir())
 
     if map_data_status == MapDataStatus.up_to_date:

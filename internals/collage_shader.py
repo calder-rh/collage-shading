@@ -47,8 +47,8 @@ class Luminance(Network):
         noisy_luminance = self.add(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
         
         remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
-        remapped_facing_ratio.outputMin.set(0.6)
-        remapped_facing_ratio.outputMax.set(0.05)
+        remapped_facing_ratio.outputMin.set(0.1)
+        remapped_facing_ratio.outputMax.set(0.4)
         facing_ratio.outValue >> remapped_facing_ratio.inputValue
 
         base_step_2nl = self.multiply(2, noisy_luminance, 'base_step_2nl')
@@ -222,4 +222,4 @@ class CollageShader(Network):
         shader.outColor >> sg.surfaceShader
 
         sets(sg, e=True, fe=obj)
-        obj_shape.aiVisibleInDiffuseReflection.set(False)
+        # obj_shape.aiVisibleInDiffuseReflection.set(False)
