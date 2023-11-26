@@ -271,7 +271,7 @@ def make_map_data(image_path, data_path):
                     ('image_up', None),
                     ('scale', 1),
                     ('edge_distance', [0.1, 0.1]),
-                    ('orienter', None)
+                    ('orienter', None),
                     ('blur_markers', [])]
         for attr_name, default_value in defaults:
             if getattr(facet, attr_name) is None:
