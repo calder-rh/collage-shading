@@ -13,12 +13,12 @@ noise_adjustment = 0.1
 
 class Luminance(Network):
     relevant_context = []
-    delete = False
+    delete = True
 
     def __init__(self, context):
         raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
         sc = ShadingController()
-        scaled_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'scaled_luminance')
+        facing_ratio = self.utility('aiFacingRatio', 'facing_ratio')
 
         noise = self.utility('aiNoise', 'luminance_noise')
         noise.coordSpace.set(3)
@@ -37,8 +37,23 @@ class Luminance(Network):
         adjusted_noise.outputMax.set(noise_adjustment)
         noise_projection.outColorR >> adjusted_noise.inputValue
 
-        noisy_luminance = self.add(scaled_luminance, adjusted_noise.outValue, 'noisy_luminance')
-        self.luminance = noisy_luminance
+        attrs = ['raw_luminance',
+                 'luminance_factor',
+                 'noise',
+                 'facing_ratio'
+                 'out_value']
+        expr = """
+float $noisy_luminance = luminance_factor * raw_luminance + noise;
+float $remapped_fr = (1 - facing_ratio) * 0.95 + facing_ratio * 0.2;
+out_value = (pow((2 * $luminance - 1), (1 / $remapped_fr - 1)) + 1) / 2
+"""
+        adjusted_luminance = self.expression('adjusted_luminance', attrs, expr)
+        raw_luminance.outValue >> adjusted_luminance.raw_luminance
+        sc.luminance_factor >> adjusted_luminance.luminance_factor
+        adjusted_noise.outValue >> adjusted_luminance.noise
+        facing_ratio.outValue >> adjusted_luminance.facing_ratio
+
+        self.luminance = adjusted_luminance.out_value
 
 
 class FacetShader(Network):

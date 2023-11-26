@@ -9,8 +9,8 @@ from abc import ABC, abstractmethod
 from random import uniform
 
 
-solid_region = 0.02
-default_num_shades = 5
+solid_region = 0.05
+default_num_shades = 3
 palette_regex = r'(\d+)(?!.*\.json).*'
 shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
 
