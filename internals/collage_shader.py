@@ -13,7 +13,7 @@ noise_adjustment = 0.1
 
 class Luminance(Network):
     relevant_context = []
-    delete = True
+    delete = False
 
     def __init__(self, context):
         raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
