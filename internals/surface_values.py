@@ -94,7 +94,6 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
         bb_diagonal = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d ** 2) ** 0.5
         average_scale = (trans.sx.get() ** 2 + trans.sy.get() ** 2 + trans.sz.get() ** 2) ** 0.5
         max_blur_size = default_blur_size_ratio * bb_diagonal / average_scale
-        print(max_blur_size)
         one_size = True
             
     def blur_samples(blur_size):
@@ -108,8 +107,8 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     blur_values = [[[0 for _ in range(blur_resolution)] for _ in range(blur_resolution)] for _ in range(num_facets)]
 
     facet_center_sums = []
-    for facet in facet_instructions:
-        if facet['orienter'] is None:
+    for instructions in facet_instructions.values():
+        if instructions['orienter'] is None:
             facet_center_sums.append([[0, 0, 0], 0])
         else:
             facet_center_sums.append(None)
