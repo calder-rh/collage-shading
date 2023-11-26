@@ -96,21 +96,22 @@ class ImagesPalette(Palette):
 
     def _instructions(_):
         return {
+            'filename prefix': 'What the filename of this shade file starts with',
             'up': 'The image will rotate so that this direction is pointing in the same direction as the object’s up vector. Measured clockwise from the top.',
             'shades': 'A list of all the shades that make up this palette, arranged from dark to light, with settings for each one. Here is a description of each setting:',
-            'luminance': 'How much light should be hitting the surface to make this shade show up. Can be a list of two numbers indicating a region on the ramp to use for this shade. (Between 0 and 1)',
-            'expected name': 'What the filename of this shade file probably starts with, if you’re counting from 0. For reference only.'
+            'luminance': 'How much light should be hitting the surface to make this shade show up. Can be a list of two numbers indicating a region on the ramp to use for this shade. (Between 0 and 1)'
         }
         
     def _default_shade_settings(self):
-        num_shades = len(self.images)
         shade_settings = []
-        for i in range(num_shades):
+        num_shades = len(self.images)
+        for i, image_file in enumerate(self.images):
             if num_shades == 1:
                 ratio = 0.5
             else:
                 ratio = i / (num_shades - 1)
-            shade_settings.append({'luminance': ratio, 'expected name': f's{i}'})
+            shade_number = re.fullmatch(shade_regex, image_file.name).group(1)
+            shade_settings.append({'luminance': ratio, 'filename prefix': f's{shade_number}'})
         return shade_settings
     
     def make(self, scale, edge_distance):
@@ -122,7 +123,8 @@ class ImagesPalette(Palette):
 
         x = uniform(horizontal_edge_distance, 1 - horizontal_edge_distance)
         y = uniform(vertical_edge_distance, 1 - vertical_edge_distance)
-        for image, setting in zip(self.images, settings['shades']):
+        for setting in settings['shades']:
+            image = [image for image in self.images if image.name.startswith(setting['filename prefix'])][0]
             self.facet_images.append(FacetImage(image, x, y, scale))
             luminance =  setting['luminance']
             if isinstance(luminance, list):
