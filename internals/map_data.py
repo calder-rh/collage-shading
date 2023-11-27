@@ -51,9 +51,11 @@ def group_and_count(locations):
 
 
 class FacetInstructions:
-    def __init__(self, color_index, color):
+    def __init__(self, color_index, color, resolution):
         self.color_index = color_index
         self.color = color
+        self.resolution = resolution
+
         self.instruction_pixels = {color: set() for color in instruction_colors}
 
         self.palette_path_indices = None
@@ -175,7 +177,28 @@ class FacetInstructions:
         if not locations:
             return
         
-        self.orienter = group_and_count(locations)
+        specified_angle = False
+        if len(locations) == 6:
+            center = None
+            for y, x in locations:
+                neighbors = {(y + dy, x + dx) for dy, dx in neighbor_coords}
+                if all(neighbor in locations for neighbor in neighbors):
+                    center = y, x
+                    break
+            specified_angle = center is not None
+            if specified_angle:
+                py, px = center
+                non_neighbor = (locations - neighbors - set((center,))).pop()
+                orienter_angle = degrees(atan2(center[0] - non_neighbor[0], non_neighbor[1] - center[1]))
+        
+        if not specified_angle:
+            orienter_angle = 0
+            py = sum(location[0] for location in locations) / len(locations)
+            px = sum(location[1] for location in locations) / len(locations)
+
+        u = (px + 0.5) / self.resolution
+        v = ((self.resolution - py - 1) + 0.5) / self.resolution
+        self.orienter = [u, v, orienter_angle]
     
     def interpret_blur_markers(self):
         self.blur_markers = list(self.instruction_pixels[yellow])
@@ -223,7 +246,7 @@ def make_map_data(image_path, data_path):
                 color_counts[color] += 1
             
     index_to_color = {index: color for color, index in color_indices.items()}
-    all_facet_instructions = [FacetInstructions(index, index_to_color[index]) for index in range(len(color_indices))]
+    all_facet_instructions = [FacetInstructions(index, index_to_color[index], resolution) for index in range(len(color_indices))]
     
     for color, locations in instruction_pixels.items():
         this_color_index = -1 - instruction_colors.index(color)
@@ -267,7 +290,7 @@ def make_map_data(image_path, data_path):
                 error(f'No specified palette for region of color r={facet.color[0]}, g={facet.color[1]}, b={facet.color[2]}.')
             facet.palette_path_indices = white_palette_path_indices
 
-        defaults = [('object_up', [0, 1, 0]),
+        defaults = [('object_up', None),
                     ('image_up', None),
                     ('scale', 1),
                     ('edge_distance', [0.1, 0.1]),

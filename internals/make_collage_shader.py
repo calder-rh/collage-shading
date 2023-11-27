@@ -102,13 +102,16 @@ def run():
         num_facets = len(original_map_data['facets'])
     else:
         num_facets = len(new_map_data['facets'])
+
     if num_facets > 1 and (not masks_exist or facet_borders_changed or blur_markers_changed):
         if masks_exist:
             rmtree(masks_path, ignore_errors=True)
+
         dialog_output = promptDialog(t='Enter resolution', m='Enter the resolution for the facet mask images. Larger values take longer to run.', b=['OK'], ma='left', st='integer', tx='256')
         if dialog_output == 'dismiss':
             exit()
         blur_resolution = int(promptDialog(q=True, tx=True))
+
         node = None
         for node in selection:
             if node.type() == 'mesh':
@@ -123,6 +126,7 @@ def run():
             obj = node.getTransform()
         elif node.type() == 'transform' and node.getShape().type() == 'mesh':
             obj = node
+
         surface_values_path = calculate_surface_values(obj, map_data_path, blur_resolution)
         blur_proc = subprocess.run(['python3', shading_path('code', 'internals', 'blur_images.py'), surface_values_path, map_data_path], capture_output=True)
 

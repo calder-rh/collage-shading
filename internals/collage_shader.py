@@ -6,6 +6,7 @@ from internals.screen_placement import ScreenPlacement
 from internals.tracking_projection import TrackingProjection
 from internals.shading_controller import ShadingController
 from internals.dialog_with_support import dialog_with_support
+from internals.unique_name import format_unique_name
 import json, re
 
 noise_scale = 1000
@@ -72,36 +73,50 @@ class Luminance(Network):
 class FacetShader(Network):
     relevant_context = ['object', 'facet']
     
-    def __init__(self, context, masks_path, resolution, obj, facet_index, facet_settings, facet_center):
+    def __init__(self, context, masks_path, resolution, obj, facet_index, facet_settings, facet_center, orienter_group_name):
         multiple_facets = masks_path is not None
 
         palette = palettes.get_palette(facet_settings['palette'])
         palette.make(facet_settings['scale'], facet_settings['edge distance'])
 
         orienter_settings = facet_settings['orienter']
+        obj_up_settings = facet_settings['object up']
+
+        if obj.type() == 'transform':
+            obj_shape = obj.getShape()
+        else:
+            obj_shape = obj
+
         if orienter_settings is None:
-            world_placement = self.build(RigidWorldPlacement(context, obj, facet_center, facet_settings['object up']))
+            if obj_up_settings is None:
+                obj_up_settings = (0, 1, 0)
+            world_placement = self.build(RigidWorldPlacement(context, obj, facet_center, obj_up_settings))
 
         else:
-            if not objExists('facet_orienters'):
-                error('No orienter group', 'Facet orienters must be in a group called facet_orienters')
-
-            current_obj = PyNode('facet_orienters')
-            for index, number in enumerate(orienter_settings):
-                next_number_regex = '\D' + str(number) + '$'
-                children = listRelatives(current_obj, children=True)
-                matching_children = [child for child in children if re.search(next_number_regex, child.name())]
-                num_matches = len(matching_children)
-                if num_matches == 0:
-                    error('Invalid orienter specification', f'There is no orienter matching {orienter_settings}.')
-                if num_matches > 1:
-                    error('Invalid orienter specification', f'There may be more than one orienter matching {orienter_settings}.')
-                current_obj = matching_children[0]
-                is_group = current_obj.getShape() is None
-                if is_group != (index < len(orienter_settings) - 1):
-                    error('Invalid orienter specification', f'The numbers {orienter_settings} do not match an orienter.')
+            if obj_up_settings is None:
+                obj_up_settings = (0, 1, 0)
             
-            world_placement = self.build(RigidWorldPlacement(context, current_obj, (0, 0, 0), facet_settings['object up']))
+            if objExists(orienter_group_name):
+                orienter_group = PyNode(orienter_group_name)
+            else:
+                orienter_group = group(name=orienter_group_name, em=True)
+
+            u, v, angle = orienter_settings
+            pin = createNode('uvPin', name=f'facet_{facet_index}_pin')
+            pin.coordinate[0].set([u, v])
+            pin.normalAxis.set(2)
+            pin.tangentAxis.set(0)
+            mesh = obj_shape.worldMesh[0]
+            mesh >> pin.originalGeometry
+            mesh >> pin.deformedGeometry
+            locator_shape = createNode('locator', name=f'facet_{facet_index}_locator')
+            locator_transform = locator_shape.getTransform()
+            locator_transform.rename(name=f'facet_{facet_index}')
+            pin.outputMatrix[0] >> locator_transform.offsetParentMatrix
+            locator_transform.rz.set(angle)
+            parent(locator_transform, orienter_group)
+
+            world_placement = self.build(RigidWorldPlacement(context, locator_transform, (0, 0, 0), obj_up_settings))
 
         if (facet_up := facet_settings['image up']) is not None:
             image_up = facet_up
@@ -162,6 +177,10 @@ class CollageShader(Network):
                 if connection.getShape() == obj_shape:
                     obj_shape.instObjGroups[0] // dsm
                     break
+
+        self.orienter_group_name = format_unique_name(obj) + '_orienters'
+        if objExists(self.orienter_group_name):
+            delete(self.orienter_group_name)
         
         map_dir_path = map_image_path.with_name(map_image_path.stem)
         map_data_path = map_dir_path / 'map data.json'
@@ -192,7 +211,7 @@ class CollageShader(Network):
             if not multiple_facets:
                 masks_path = None
                 resolution = None
-            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, facet_index, facet_settings, facet_center), add_keys=False)
+            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, facet_index, facet_settings, facet_center, self.orienter_group_name), add_keys=False)
             
             if not multiple_facets:
                 shader_color = facet_shader.color

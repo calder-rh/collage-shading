@@ -5,7 +5,7 @@ import itertools
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
 
-default_blur_size_ratio = 0.05
+default_blur_size_ratio = 0.1
 
 
 def vector_sum(p, q):
@@ -106,12 +106,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     num_facets = len(facet_instructions)
     blur_values = [[[0 for _ in range(blur_resolution)] for _ in range(blur_resolution)] for _ in range(num_facets)]
 
-    facet_center_sums = []
-    for instructions in facet_instructions.values():
-        if instructions['orienter'] is None:
-            facet_center_sums.append([[0, 0, 0], 0])
-        else:
-            facet_center_sums.append(None)
+    facet_center_sums = [[[0, 0, 0], 0] for _ in range(num_facets)]
 
     progress_window = window(t='Generating mask images…')
     columnLayout()
