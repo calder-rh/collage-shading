@@ -7,6 +7,7 @@ from internals.tracking_projection import TrackingProjection
 from internals.shading_controller import ShadingController
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
+from internals.shading_path import shading_path
 import json, re
 
 noise_scale = 1000
@@ -40,16 +41,17 @@ class Luminance(Network):
         noise.outColor >> noise_projection.image
 
         adjusted_noise = self.utility('remapValue', 'adjusted_noise')
-        adjusted_noise.outputMin.set(-noise_adjustment)
-        adjusted_noise.outputMax.set(noise_adjustment)
+        adjusted_noise.outputMin.set(1 - noise_adjustment)
+        adjusted_noise.outputMax.set(1 + noise_adjustment)
         noise_projection.outColorR >> adjusted_noise.inputValue
 
         adjusted_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'adjusted_luminance')
-        noisy_luminance = self.add(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
+        noisy_luminance = self.multiply(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
         
         remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
-        remapped_facing_ratio.outputMin.set(0.1)
-        remapped_facing_ratio.outputMax.set(0.4)
+        # TODO mess with this more, see if I actually need it after all that
+        remapped_facing_ratio.outputMin.set(0.2)
+        remapped_facing_ratio.outputMax.set(0.2)
         facing_ratio.outValue >> remapped_facing_ratio.inputValue
 
         base_step_2nl = self.multiply(2, noisy_luminance, 'base_step_2nl')
@@ -65,16 +67,21 @@ class Luminance(Network):
         signed_power = self.multiply(sign_base, power, 'signed_power')
 
         signed_power_plus_1 = self.add(signed_power, 1, 'signed_power_plus_1')
-        signed_power_plus_1_over_2 = self.divide(signed_power_plus_1, 2, 'signed_power_plus_1_over_2')
+        final_adjusted_luminance = self.divide(signed_power_plus_1, 2, 'final_adjusted_luminance')
 
-        self.luminance = signed_power_plus_1_over_2
+        self.luminance = final_adjusted_luminance
 
 
 class FacetShader(Network):
     relevant_context = ['object', 'facet']
     
-    def __init__(self, context, masks_path, resolution, obj, facet_index, facet_settings, facet_center, orienter_group_name):
+    def __init__(self, context, masks_path, resolution, obj, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
         multiple_facets = masks_path is not None
+
+        orienter_transforms = None
+        if orienter_transform_path.exists():
+            with orienter_transform_path.open() as file:
+                orienter_transforms = json.load(file)
 
         palette = palettes.get_palette(facet_settings['palette'])
         palette.make(facet_settings['scale'], facet_settings['edge distance'])
@@ -113,7 +120,13 @@ class FacetShader(Network):
             locator_transform = locator_shape.getTransform()
             locator_transform.rename(name=f'facet_{facet_index}')
             pin.outputMatrix[0] >> locator_transform.offsetParentMatrix
-            locator_transform.rz.set(angle)
+
+            if orienter_transforms:
+                locator_transform.t.set(orienter_transforms[str(facet_index)]['translate'])
+                locator_transform.r.set(orienter_transforms[str(facet_index)]['rotate'])
+            else:
+                locator_transform.rz.set(angle)
+
             parent(locator_transform, orienter_group)
 
             world_placement = self.build(RigidWorldPlacement(context, locator_transform, (0, 0, 0), obj_up_settings))
@@ -151,7 +164,7 @@ class FacetShader(Network):
             facet_mask.offsetV.set(offset)
             corrected_facet_mask = self.utility('gammaCorrect', f'g_facet{facet_index}')
             facet_mask.outColor >> corrected_facet_mask.value
-            corrected_facet_mask.gamma.set((2,) * 3)
+            corrected_facet_mask.gamma.set((2.3,) * 3)
 
             masked_shade_ramp = self.utility('aiMultiply', f'masked_ramp_{facet_index}')
             corrected_facet_mask.outValue >> masked_shade_ramp.input1
@@ -178,11 +191,25 @@ class CollageShader(Network):
                     obj_shape.instObjGroups[0] // dsm
                     break
 
-        self.orienter_group_name = format_unique_name(obj) + '_orienters'
-        if objExists(self.orienter_group_name):
-            delete(self.orienter_group_name)
-        
         map_dir_path = map_image_path.with_name(map_image_path.stem)
+
+        self.orienter_group_name = format_unique_name(obj) + '_orienters'
+        orienter_transform_path = map_dir_path / 'orienters.json'
+
+        if objExists(self.orienter_group_name):
+            orienter_transform_values = {}
+            for orienter in listRelatives(self.orienter_group_name):
+                if (match := re.fullmatch(r'facet_(\d+)', orienter.name())):
+                    facet_num = match.group(1)
+                    orienter_transform_values[facet_num] = {'translate': list(orienter.t.get()), 'rotate': list(orienter.r.get())}
+            with orienter_transform_path.open('w') as file:
+                json.dump(orienter_transform_values, file, indent=4)
+            
+            delete(self.orienter_group_name)
+        else:
+            if orienter_transform_path.exists():
+                orienter_transform_path.unlink()
+        
         map_data_path = map_dir_path / 'map data.json'
         with map_data_path.open() as file:
             facet_settings_dict = json.load(file)['facets']
@@ -211,7 +238,7 @@ class CollageShader(Network):
             if not multiple_facets:
                 masks_path = None
                 resolution = None
-            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, facet_index, facet_settings, facet_center, self.orienter_group_name), add_keys=False)
+            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, facet_index, facet_settings, facet_center, self.orienter_group_name, orienter_transform_path), add_keys=False)
             
             if not multiple_facets:
                 shader_color = facet_shader.color
