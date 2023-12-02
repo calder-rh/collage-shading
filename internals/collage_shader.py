@@ -124,6 +124,7 @@ class FacetShader(Network):
             if orienter_transforms:
                 locator_transform.t.set(orienter_transforms[str(facet_index)]['translate'])
                 locator_transform.r.set(orienter_transforms[str(facet_index)]['rotate'])
+                locator_transform.s.set(orienter_transforms[str(facet_index)]['scale'])
             else:
                 locator_transform.rz.set(angle)
 
@@ -201,7 +202,7 @@ class CollageShader(Network):
             for orienter in listRelatives(self.orienter_group_name):
                 if (match := re.fullmatch(r'facet_(\d+)', orienter.name())):
                     facet_num = match.group(1)
-                    orienter_transform_values[facet_num] = {'translate': list(orienter.t.get()), 'rotate': list(orienter.r.get())}
+                    orienter_transform_values[facet_num] = {'translate': list(orienter.t.get()), 'rotate': list(orienter.r.get()), 'scale': list(orienter.s.get())}
             with orienter_transform_path.open('w') as file:
                 json.dump(orienter_transform_values, file, indent=4)
             
