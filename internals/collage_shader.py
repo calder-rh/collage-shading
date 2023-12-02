@@ -7,7 +7,6 @@ from internals.tracking_projection import TrackingProjection
 from internals.shading_controller import ShadingController
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
-from internals.shading_path import shading_path
 import json, re
 
 noise_scale = 1000
@@ -21,7 +20,8 @@ def error(title, message):
 
 class Luminance(Network):
     relevant_context = []
-    delete = False
+    prefix = 'lum___'
+    delete = True
 
     def __init__(self, context):
         raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
@@ -49,27 +49,17 @@ class Luminance(Network):
         noisy_luminance = self.multiply(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
         
         remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
-        # TODO mess with this more, see if I actually need it after all that
-        remapped_facing_ratio.outputMin.set(0.2)
-        remapped_facing_ratio.outputMax.set(0.2)
+        sc.edge_curve >> remapped_facing_ratio.outputMin
+        sc.front_curve >> remapped_facing_ratio.outputMax
         facing_ratio.outValue >> remapped_facing_ratio.inputValue
 
-        base_step_2nl = self.multiply(2, noisy_luminance, 'base_step_2nl')
-        base = self.subtract(base_step_2nl, 1, 'base')
-        abs_step_square = self.power(base, 2, 'abs_step_square')
-        abs_base = self.power(abs_step_square, 0.5, 'abs_base')
-        sign_base = self.divide(base, abs_base, 'sign_base')
+        base = self.subtract(1, noisy_luminance, 'base')
+        one_over_rfr = self.divide(1, remapped_facing_ratio.outValue, 'one_over_rfr')
+        exponent = self.subtract(one_over_rfr, 1, 'exponent')
+        power = self.power(base, exponent, 'power')
+        curved_luminance = self.subtract(1, power, 'curved_luminance')
 
-        exponent_step_1_over_rfr = self.divide(1, remapped_facing_ratio.outValue, 'exponent_step_1_over_rfr')
-        exponent = self.subtract(exponent_step_1_over_rfr, 1, 'exponent')
-
-        power = self.power(abs_base, exponent, 'power')
-        signed_power = self.multiply(sign_base, power, 'signed_power')
-
-        signed_power_plus_1 = self.add(signed_power, 1, 'signed_power_plus_1')
-        final_adjusted_luminance = self.divide(signed_power_plus_1, 2, 'final_adjusted_luminance')
-
-        self.luminance = final_adjusted_luminance
+        self.luminance = curved_luminance
 
 
 class FacetShader(Network):
