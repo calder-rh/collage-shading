@@ -5,7 +5,8 @@ from math import atan2, degrees
 import json
 import sys
 from pathlib import Path
-from palettes import test_indices
+from palettes import get_path_type, PathType
+from enum import Enum
 
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -68,7 +69,7 @@ class FacetInstructions:
 
     def error(self, msg):
         if self.color == white:
-            error(f'Error in the region outside the facets\n{msg}')
+            error(f'Error in the global region\n{msg}')
         else:
             error(f'Error in the facet with color r={self.color[0]}, g={self.color[1]}, b={self.color[2]}\n{msg}')
 
@@ -81,9 +82,6 @@ class FacetInstructions:
             return
         
         path_indices = group_and_count(locations)
-
-        if not test_indices(path_indices):
-            self.error(f'There is no palette at a path corresponding to the indices {path_indices}.')
         self.palette_path_indices = path_indices
     
     def interpret_object_up(self):
@@ -189,7 +187,7 @@ class FacetInstructions:
             if specified_angle:
                 py, px = center
                 non_neighbor = (locations - neighbors - set((center,))).pop()
-                orienter_angle = degrees(atan2(center[0] - non_neighbor[0], non_neighbor[1] - center[1]))
+                orienter_angle = degrees(atan2(center[0] - non_neighbor[0], non_neighbor[1] - center[1])) - 90
         
         if not specified_angle:
             orienter_angle = 0
@@ -211,6 +209,12 @@ class FacetInstructions:
         self.interpret_edge_distance()
         self.interpret_orienter()
         self.interpret_blur_markers()
+
+
+class GlobalPathType(Enum):
+    none = 0
+    default = 1
+    root = 2
 
 
 def make_map_data(image_path, data_path):
@@ -276,7 +280,18 @@ def make_map_data(image_path, data_path):
 
     white_region = all_facet_instructions[0]
     white_region.interpret_instructions()
-    white_palette_path_indices = white_region.palette_path_indices
+    global_palette_path_indices = white_region.palette_path_indices
+
+    if global_palette_path_indices is None:
+        global_path_type = GlobalPathType.none
+    else:
+        white_palette_path_type = get_path_type(global_palette_path_indices)
+        if white_palette_path_type == PathType.non_palette_directory:
+            global_path_type = GlobalPathType.root
+        elif white_palette_path_type == PathType.palette:
+            global_path_type = GlobalPathType.default
+        else:
+            error('Invalid global palette path.')
 
     if len(all_facet_instructions) == 1:
         all_facet_instructions.append(all_facet_instructions[0])
@@ -285,10 +300,25 @@ def make_map_data(image_path, data_path):
     for facet in all_facet_instructions[1:]:
         facet.interpret_instructions()
 
-        if facet.palette_path_indices is None:
-            if white_palette_path_indices is None:
-                error(f'No specified palette for region of color r={facet.color[0]}, g={facet.color[1]}, b={facet.color[2]}.')
-            facet.palette_path_indices = white_palette_path_indices
+        facet_error_string = f'facet of color r={facet.color[0]}, g={facet.color[1]}, b={facet.color[2]}'
+
+        if global_path_type == GlobalPathType.root:
+            if facet.palette_path_indices is None:
+                error(f'No specified palette for {facet_error_string}.')
+            else:
+                full_path_indices = global_palette_path_indices + facet.palette_path_indices
+                if get_path_type(full_path_indices) == PathType.palette:
+                    facet.palette_path_indices = full_path_indices
+                else:
+                    error(f'Invalid palette path for {facet_error_string}.')
+        elif global_path_type == GlobalPathType.default and facet.palette_path_indices is None:
+            facet.palette_path_indices = global_palette_path_indices
+        elif facet.palette_path_indices is None:
+            error(f'No specified palette for {facet_error_string}.')
+        else:
+            path_type = get_path_type(facet.palette_path_indices)
+            if path_type != PathType.palette:
+                error(f'Invalid palette path for {facet_error_string}.')
 
         defaults = [('object_up', None),
                     ('image_up', None),

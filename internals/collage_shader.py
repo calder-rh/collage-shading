@@ -21,7 +21,7 @@ def error(title, message):
 class Luminance(Network):
     relevant_context = []
     prefix = 'lum___'
-    delete = True
+    delete = False
 
     def __init__(self, context):
         raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
@@ -47,13 +47,31 @@ class Luminance(Network):
 
         adjusted_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'adjusted_luminance')
         noisy_luminance = self.multiply(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
-        
+
+        remap_luminance = self.utility('remapValue', 'remap_luminance')
+        noisy_luminance >> remap_luminance.inputValue
+        remap_luminance.value[0].value_Position.set(0)
+        remap_luminance.value[0].value_FloatValue.set(0)
+        remap_luminance.value[0].value_Interp.set(1)
+        remap_luminance.value[1].value_Position.set(0.08)
+        remap_luminance.value[1].value_FloatValue.set(0.45)
+        remap_luminance.value[1].value_Interp.set(1)
+        remap_luminance.value[2].value_Position.set(0.25)
+        remap_luminance.value[2].value_FloatValue.set(0.75)
+        remap_luminance.value[2].value_Interp.set(1)
+        remap_luminance.value[3].value_Position.set(0.5)
+        remap_luminance.value[3].value_FloatValue.set(0.9)
+        remap_luminance.value[3].value_Interp.set(1)
+        remap_luminance.value[4].value_Position.set(1)
+        remap_luminance.value[4].value_FloatValue.set(1)
+        remap_luminance.value[4].value_Interp.set(1)
+
         remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
         sc.edge_curve >> remapped_facing_ratio.outputMin
         sc.front_curve >> remapped_facing_ratio.outputMax
         facing_ratio.outValue >> remapped_facing_ratio.inputValue
 
-        base = self.subtract(1, noisy_luminance, 'base')
+        base = self.subtract(1, remap_luminance.outValue, 'base')
         one_over_rfr = self.divide(1, remapped_facing_ratio.outValue, 'one_over_rfr')
         exponent = self.subtract(one_over_rfr, 1, 'exponent')
         power = self.power(base, exponent, 'power')
@@ -259,4 +277,4 @@ class CollageShader(Network):
         shader.outColor >> sg.surfaceShader
 
         sets(sg, e=True, fe=obj)
-        # obj_shape.aiVisibleInDiffuseReflection.set(False)
+        obj_shape.aiSelfShadows.set(False)

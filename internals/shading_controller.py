@@ -26,12 +26,12 @@ class ShadingController:
             addAttr(node, p='camera', ln='horizontal_aperture', dcb=2, dv=1.417)
             addAttr(node, ln='aspect_ratio', k=True, dv=16/9, dcb=2)
             addAttr(node, ln='luminance_factor', min=0, smx=1, dv=1, k=True, dcb=2)
-            addAttr(node, ln='edge_curve', min=0, smx=0.5, max=1, dv=0.1, k=True)
-            addAttr(node, ln='front_curve', min=0, smx=0.5, max=1, dv=0.4, k=True)
+            addAttr(node, ln='edge_curve', min=0, smx=0.5, max=1, dv=0.5, k=True)
+            addAttr(node, ln='front_curve', min=0, smx=0.5, max=1, dv=0.1, k=True)
             self.camera = node.camera
             self.aspect_ratio = node.aspect_ratio
-            self.luminance_factor = node.luminance_factor
-            self.luminance_curve = node.luminance_curve
+            self.edge_curve = node.edge_curve
+            self.front_curve = node.front_curve
 
             ref_shading_controllers = ls(regex=f'[^:]+:({sc_name}|{rscs_name})')
             if ref_shading_controllers:

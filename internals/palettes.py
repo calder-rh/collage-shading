@@ -7,6 +7,7 @@ import json
 import re
 from abc import ABC, abstractmethod
 from random import uniform
+from enum import Enum
 
 
 solid_region = 0.05
@@ -190,14 +191,23 @@ def indices_to_path(indices):
             raise Exception(f'There is no palette at a path corresponding to {indices}.')
         current_path = next_path
     return current_path
-        
 
-def test_indices(indices):
+
+class PathType(Enum):
+    invalid = 0
+    palette = 1
+    non_palette_directory = 2
+
+
+def get_path_type(indices):
     try:
-        indices_to_path(indices)
-        return True
+        path = indices_to_path(indices)
+        if path.is_file() or any(item.is_file() and re.fullmatch(shade_regex, item.name) for item in path.iterdir()):
+            return PathType.palette
+        else:
+            return PathType.non_palette_directory
     except:
-        return False
+        return PathType.invalid
 
 
 def get_palette(input):

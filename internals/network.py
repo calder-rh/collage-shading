@@ -162,8 +162,6 @@ class Network:
             return result
 
     def build(self, network, add_keys=True):
-        # if add_keys is None:
-        #     add_keys = self.add_keys
         self.subnetworks.add(network)
         if add_keys:
             self.node_keys |= network.node_keys
