@@ -150,18 +150,18 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
                     blur_values[facet_index][py][px] += sample_contribution * count
 
             # See which facets show up when using the maximum blur size
-            maximum_blur_facet_counts = find_sample_facets(max_blur_size)
+            default_blur_facet_counts = find_sample_facets(max_blur_size / 3)
             
             # If there’s only one blur size, or there’s only one facet, then just go with this
-            if one_size or len(maximum_blur_facet_counts) == 1:
-                record_blur_contributions(maximum_blur_facet_counts)
+            if one_size or len(default_blur_facet_counts) == 1:
+                record_blur_contributions(default_blur_facet_counts)
                 continue
 
             # Otherwise need to calculate the correct blur length for this context
             weighted_blur_sizes = [
-                (get_blur_size(fi1, fi2), maximum_blur_facet_counts[fi1] * maximum_blur_facet_counts[fi2])
+                (get_blur_size(fi1, fi2), default_blur_facet_counts[fi1] * default_blur_facet_counts[fi2])
                 for fi1, fi2 in 
-                itertools.combinations(sorted(maximum_blur_facet_counts), 2)]
+                itertools.combinations(sorted(default_blur_facet_counts), 2)]
             
             blur_size = sum(size * weight for size, weight in weighted_blur_sizes) / sum(weight for _, weight in weighted_blur_sizes)
 

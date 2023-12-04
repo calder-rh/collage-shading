@@ -291,7 +291,7 @@ def make_map_data(image_path, data_path):
         elif white_palette_path_type == PathType.palette:
             global_path_type = GlobalPathType.default
         else:
-            error('Invalid global palette path.')
+            error(f'Invalid global palette indices {global_palette_path_indices}.')
 
     if len(all_facet_instructions) == 1:
         all_facet_instructions.append(all_facet_instructions[0])
@@ -310,7 +310,7 @@ def make_map_data(image_path, data_path):
                 if get_path_type(full_path_indices) == PathType.palette:
                     facet.palette_path_indices = full_path_indices
                 else:
-                    error(f'Invalid palette path for {facet_error_string}.')
+                    error(f'Invalid palette path {full_path_indices} for {facet_error_string}.')
         elif global_path_type == GlobalPathType.default and facet.palette_path_indices is None:
             facet.palette_path_indices = global_palette_path_indices
         elif facet.palette_path_indices is None:
@@ -318,7 +318,7 @@ def make_map_data(image_path, data_path):
         else:
             path_type = get_path_type(facet.palette_path_indices)
             if path_type != PathType.palette:
-                error(f'Invalid palette path for {facet_error_string}.')
+                error(f'Invalid palette path {facet.palette_path_indices} for {facet_error_string}.')
 
         defaults = [('object_up', None),
                     ('image_up', None),
@@ -347,7 +347,7 @@ def make_map_data(image_path, data_path):
                                    'map color': facet_instructions.color}
         all_facet_instructions_data[facet_instructions.color_index] = facet_instructions_data
     out_data['facets'] = all_facet_instructions_data
-    out_data['anti-aliasing warning'] = len(color_counts) > 30 or any(count < 25 for color, count in color_counts.items() if color != white)
+    out_data['anti-aliasing warning'] = len(color_counts) > 100 or any(count < 25 for color, count in color_counts.items() if color != white)
     out_data['last modified'] = None
     if len(all_facet_instructions) > 2:
         out_data['pixels'] = index_array.tolist()
