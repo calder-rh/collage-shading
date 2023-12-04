@@ -142,12 +142,21 @@ class FacetInstructions:
         locations = self.instruction_pixels[red]
         if not locations:
             return
+    
+        numbers = group_and_count(locations)
+        if len(numbers) == 1:
+            lengths = [sum([y == row_y for y, _ in locations]) for row_y in sorted(list({location[0] for location in locations}))]
+            if len(lengths) != 2:
+                self.error('Invalid configuration of scale instructions (red pixels). There must be exactly 2 distinct y coordinates that have red pixels.')
+            numerator = lengths[0]
+            denominator = lengths[1]
+        elif len(numbers) == 2:
+            numerator = numbers[0]
+            denominator = numbers[1]
+        else:
+            self.error('Invalid configuration of scale instructions (red pixels).')
         
-        lengths = [sum([y == row_y for y, _ in locations]) for row_y in sorted(list({location[0] for location in locations}))]
-        if len(lengths) != 2:
-            self.error('Invalid configuration of scale instructions (red pixels). There must be exactly 2 distinct y coordinates that have red pixels.')
-        
-        self.scale = lengths[0] / lengths[1]
+        self.scale = numerator / denominator
     
     def interpret_edge_distance(self):
         locations = self.instruction_pixels[magenta]
