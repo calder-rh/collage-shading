@@ -2,7 +2,7 @@ from pathlib import Path
 from pymel.core import *
 
 
-shading_dir = Path(workspace(q=True, rd=True)) / 'shading'
+shading_dir = Path(workspace(q=True, rd=True)) / 'shading' / 'fantasy'
 
 def shading_path(*args):
     return shading_dir / Path(*args)
