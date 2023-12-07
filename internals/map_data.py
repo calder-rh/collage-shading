@@ -1,5 +1,5 @@
-import maya
-sys.stderr.write('able to import maya??')
+import sys
+sys.stderr.write(f'Python version is {sys.version}')
 exit(1)
 import numpy as np
 from PIL import Image
