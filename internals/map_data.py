@@ -1,9 +1,11 @@
+import sys
+sys.path.append('/Users/gracechen/anaconda3/lib/python3.11/site-packages')
+
 import numpy as np
 from PIL import Image
 from shading_path import shading_path
 from math import atan2, degrees
 import json
-import sys
 from pathlib import Path
 from palettes import get_path_type, PathType
 from enum import Enum
@@ -25,10 +27,6 @@ neighbor_coords = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 def error(msg):
     sys.stderr.write(msg)
     exit(1)
-
-
-from getpass import getuser
-error(f'{getuser()}\n{sys.path}')
 
 
 def group_and_count(locations):
