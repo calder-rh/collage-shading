@@ -28,6 +28,15 @@ import json
 import subprocess
 from enum import Enum
 
+from getpass import getuser
+username = getuser()
+if username == 'calder':
+    interpreter = '/Library/Frameworks/Python.framework/Versions/Current/bin/python3'
+elif username == 'gracechen':
+    interpreter = '/Users/gracechen/anaconda3/bin/python3'
+else:
+    interpreter = 'python3'
+
 
 class MapDataStatus(Enum):
     nonexistent = 0
@@ -66,7 +75,7 @@ def run():
         map_dir_path.mkdir()
 
     if map_data_status != MapDataStatus.up_to_date:
-        map_proc = subprocess.run(['python3', shading_path('code', 'internals', 'map_data.py'), map_image_path, map_data_path], capture_output=True)
+        map_proc = subprocess.run([interpreter, shading_path('code', 'internals', 'map_data.py'), map_image_path, map_data_path], capture_output=True)
         if map_proc.returncode or (err := map_proc.stderr.decode("utf-8")) != '':
             err = map_proc.stderr.decode("utf-8")
             if '\n' in err:
@@ -132,7 +141,7 @@ def run():
         surface_values_path = calculate_surface_values(obj, map_data_path, blur_resolution)
     
     if num_facets > 1 and not masks_exist:
-        blur_proc = subprocess.run(['python3', shading_path('code', 'internals', 'blur_images.py'), surface_values_path], capture_output=True)
+        blur_proc = subprocess.run([interpreter, shading_path('code', 'internals', 'blur_images.py'), surface_values_path], capture_output=True)
 
     if map_data_status != MapDataStatus.up_to_date:
         with map_data_path.open('w') as file:
