@@ -1,7 +1,3 @@
-import sys
-sys.stderr.write(f'Python version is {sys.version}')
-exit(1)
-
 import numpy as np
 from PIL import Image
 from shading_path import shading_path
