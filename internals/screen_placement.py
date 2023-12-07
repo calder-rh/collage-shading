@@ -67,7 +67,7 @@ float $obj_center_ss_x = focal_length_factor * obj_center_cs_x / $obj_center_cs_
 float $obj_center_ss_y = focal_length_factor * obj_center_cs_y / $obj_center_cs_z;
 vector $obj_center_ss = <<$obj_center_ss_x, $obj_center_ss_y>>;
         
-float $facet_center_cs_z = -facet_center_cs_z;
+float $facet_center_cs_z = abs(facet_center_cs_z);
 float $facet_center_ss_x = focal_length_factor * facet_center_cs_x / $facet_center_cs_z;
 float $facet_center_ss_y = focal_length_factor * facet_center_cs_y / $facet_center_cs_z;
 vector $facet_center_ss = <<$facet_center_ss_x, $facet_center_ss_y>>;

@@ -6,8 +6,10 @@ import sys
 from math import floor
 
 
-def make_blur_images(blur_values_path, map_data_path):
+def make_blur_images(blur_values_path):
     masks_path = Path(blur_values_path).parent / 'masks'
+    if not masks_path.exists():
+        masks_path.mkdir()
 
     with open(blur_values_path) as file:
         blur_array = np.array(json.load(file)['blur values'])
@@ -36,4 +38,4 @@ def make_blur_images(blur_values_path, map_data_path):
         image.save(masks_path / f'{i}.png')
 
 
-make_blur_images(sys.argv[1], sys.argv[2])
+make_blur_images(sys.argv[1])

@@ -45,7 +45,11 @@ class ShadingController:
                     for attr in ['camera_message',
                                  'inverse_world_matrix',
                                  'focal_length',
-                                 'horizontal_aperture']:
+                                 'horizontal_aperture',
+                                 'aspect_ratio',
+                                 'luminance_factor',
+                                 'edge_curve',
+                                 'front_curve']:
                         sc_attr = Attribute(sc + '.camera.' + attr)
                         connections = listConnections(sc_attr, source=True, destination=False, plugs=True)
                         if connections:

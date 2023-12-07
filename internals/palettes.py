@@ -179,8 +179,6 @@ def indices_to_path(indices):
     current_path = shading_path('palettes')
     for index in indices:
         next_path = None
-        print(type(current_path))
-        print(dir(current_path))
         for item in current_path.iterdir():
             match = re.fullmatch(palette_regex, item.name)
             if not match:

@@ -8,6 +8,7 @@ from pathlib import Path
 from palettes import get_path_type, PathType
 from enum import Enum
 
+
 white = (255, 255, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
@@ -26,27 +27,30 @@ def error(msg):
     exit(1)
 
 
-def group_and_count(locations):
-    group_parents = {location: location for location in locations}
+from getpass import getuser
+error(f'{getuser()}\n{sys.path}')
 
+
+def group_and_count(locations):
+    group_parents = {location: None for location in locations}
+
+    def set_representative(location):
+        while location is not None:
+            prev = location
+            location = group_parents[location]
+        return prev
+            
     for (y, x) in group_parents:
-        for dy, dx in [(1, 0), (0, 1)]:
+        for dy, dx in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
             ny = y + dy
             nx = x + dx
-            if (ny, nx) in group_parents:
-                group_parents[(ny, nx)] = group_parents[(y, x)]
+            if (ny, nx) not in group_parents:
+                continue
+            if group_parents[(ny, nx)] is None or set_representative((ny, nx)) != set_representative((y, x)):
+                group_parents[(y, x)] = (ny, nx)
+                continue
 
-    group_representatives = {}
-    for location in group_parents:
-        last_parent = None
-        this_parent = location
-        while this_parent != last_parent:
-            last_parent = this_parent
-            this_parent = group_parents[this_parent]
-        group_representatives[location] = this_parent
-    
-    groups = [[location for location in locations if group_representatives[location] == representative] for representative in set(group_representatives.values())]
-    
+    groups = [group for group in [[location for location in locations if set_representative(location) == representative] for representative in locations] if group]
     indices = [len(group) for group in sorted(groups, key = lambda group: sum([y + x for y, x in group]) / len(group))]
     return indices
 
@@ -154,7 +158,7 @@ class FacetInstructions:
             numerator = numbers[0]
             denominator = numbers[1]
         else:
-            self.error('Invalid configuration of scale instructions (red pixels).')
+            self.error(f'Invalid configuration of scale instructions (red pixels). {numbers}')
         
         self.scale = numerator / denominator
     

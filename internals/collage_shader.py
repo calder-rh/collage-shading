@@ -24,60 +24,63 @@ class Luminance(Network):
     delete = False
 
     def __init__(self, context):
-        raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
-        sc = ShadingController()
-        facing_ratio = self.utility('aiFacingRatio', 'facing_ratio')
+        # raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
+        # sc = ShadingController()
+        # facing_ratio = self.utility('aiFacingRatio', 'facing_ratio')
 
-        noise = self.utility('aiNoise', 'luminance_noise')
-        noise.coordSpace.set(3)
-        y_scale = noise_scale
-        x_scale = self.multiply(noise_scale, sc.aspect_ratio, 'u_scale')
-        x_scale >> noise.scaleX
-        noise.scaleY.set(y_scale)
+        # noise = self.utility('aiNoise', 'luminance_noise')
+        # noise.coordSpace.set(3)
+        # y_scale = noise_scale
+        # x_scale = self.multiply(noise_scale, sc.aspect_ratio, 'u_scale')
+        # x_scale >> noise.scaleX
+        # noise.scaleY.set(y_scale)
 
-        noise_projection = self.utility('projection', 'noise_projection')
-        noise_projection.projType.set(8)
-        sc.camera.camera_message >> noise_projection.linkedCamera
-        noise.outColor >> noise_projection.image
+        # noise_projection = self.utility('projection', 'noise_projection')
+        # noise_projection.projType.set(8)
+        # sc.camera.camera_message >> noise_projection.linkedCamera
+        # noise.outColor >> noise_projection.image
 
-        adjusted_noise = self.utility('remapValue', 'adjusted_noise')
-        adjusted_noise.outputMin.set(1 - noise_adjustment)
-        adjusted_noise.outputMax.set(1 + noise_adjustment)
-        noise_projection.outColorR >> adjusted_noise.inputValue
+        # adjusted_noise = self.utility('remapValue', 'adjusted_noise')
+        # adjusted_noise.outputMin.set(1 - noise_adjustment)
+        # adjusted_noise.outputMax.set(1 + noise_adjustment)
+        # noise_projection.outColorR >> adjusted_noise.inputValue
 
-        adjusted_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'adjusted_luminance')
-        noisy_luminance = self.multiply(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
+        # adjusted_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'adjusted_luminance')
+        # noisy_luminance = self.multiply(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
 
-        remap_luminance = self.utility('remapValue', 'remap_luminance')
-        noisy_luminance >> remap_luminance.inputValue
-        remap_luminance.value[0].value_Position.set(0)
-        remap_luminance.value[0].value_FloatValue.set(0)
-        remap_luminance.value[0].value_Interp.set(1)
-        remap_luminance.value[1].value_Position.set(0.08)
-        remap_luminance.value[1].value_FloatValue.set(0.45)
-        remap_luminance.value[1].value_Interp.set(1)
-        remap_luminance.value[2].value_Position.set(0.25)
-        remap_luminance.value[2].value_FloatValue.set(0.75)
-        remap_luminance.value[2].value_Interp.set(1)
-        remap_luminance.value[3].value_Position.set(0.5)
-        remap_luminance.value[3].value_FloatValue.set(0.9)
-        remap_luminance.value[3].value_Interp.set(1)
-        remap_luminance.value[4].value_Position.set(1)
-        remap_luminance.value[4].value_FloatValue.set(1)
-        remap_luminance.value[4].value_Interp.set(1)
+        # remap_luminance = self.utility('remapValue', 'remap_luminance')
+        # noisy_luminance >> remap_luminance.inputValue
+        # remap_luminance.value[0].value_Position.set(0)
+        # remap_luminance.value[0].value_FloatValue.set(0)
+        # remap_luminance.value[0].value_Interp.set(1)
+        # remap_luminance.value[1].value_Position.set(0.08)
+        # remap_luminance.value[1].value_FloatValue.set(0.45)
+        # remap_luminance.value[1].value_Interp.set(1)
+        # remap_luminance.value[2].value_Position.set(0.25)
+        # remap_luminance.value[2].value_FloatValue.set(0.75)
+        # remap_luminance.value[2].value_Interp.set(1)
+        # remap_luminance.value[3].value_Position.set(0.5)
+        # remap_luminance.value[3].value_FloatValue.set(0.9)
+        # remap_luminance.value[3].value_Interp.set(1)
+        # remap_luminance.value[4].value_Position.set(1)
+        # remap_luminance.value[4].value_FloatValue.set(1)
+        # remap_luminance.value[4].value_Interp.set(1)
 
-        remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
-        sc.edge_curve >> remapped_facing_ratio.outputMin
-        sc.front_curve >> remapped_facing_ratio.outputMax
-        facing_ratio.outValue >> remapped_facing_ratio.inputValue
+        # remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
+        # sc.edge_curve >> remapped_facing_ratio.outputMin
+        # sc.front_curve >> remapped_facing_ratio.outputMax
+        # facing_ratio.outValue >> remapped_facing_ratio.inputValue
 
-        base = self.subtract(1, remap_luminance.outValue, 'base')
-        one_over_rfr = self.divide(1, remapped_facing_ratio.outValue, 'one_over_rfr')
-        exponent = self.subtract(one_over_rfr, 1, 'exponent')
-        power = self.power(base, exponent, 'power')
-        curved_luminance = self.subtract(1, power, 'curved_luminance')
+        # base = self.subtract(1, remap_luminance.outValue, 'base')
+        # one_over_rfr = self.divide(1, remapped_facing_ratio.outValue, 'one_over_rfr')
+        # exponent = self.subtract(one_over_rfr, 1, 'exponent')
+        # power = self.power(base, exponent, 'power')
+        # curved_luminance = self.subtract(1, power, 'curved_luminance')
 
-        self.luminance = curved_luminance
+        # self.luminance = curved_luminance
+
+        x = self.add(1, 0, 'placeholder_luminance')
+        self.luminance = x
 
 
 class FacetShader(Network):
@@ -173,7 +176,7 @@ class FacetShader(Network):
             facet_mask.offsetV.set(offset)
             corrected_facet_mask = self.utility('gammaCorrect', f'g_facet{facet_index}')
             facet_mask.outColor >> corrected_facet_mask.value
-            corrected_facet_mask.gamma.set((2.3,) * 3)
+            corrected_facet_mask.gamma.set((2,) * 3)
 
             masked_shade_ramp = self.utility('aiMultiply', f'masked_ramp_{facet_index}')
             corrected_facet_mask.outValue >> masked_shade_ramp.input1
@@ -197,8 +200,9 @@ class CollageShader(Network):
             for dsm in old_sg.dagSetMembers:
                 connection = listConnections(dsm)[0]
                 if connection.getShape() == obj_shape:
-                    obj_shape.instObjGroups[0] // dsm
-                    break
+                    if obj_shape.instObjGroups:
+                        obj_shape.instObjGroups[0] // dsm
+                        break
 
         map_dir_path = map_image_path.with_name(map_image_path.stem)
 
@@ -277,4 +281,5 @@ class CollageShader(Network):
         shader.outColor >> sg.surfaceShader
 
         sets(sg, e=True, fe=obj)
+        obj_shape.aiVisibleInDiffuseReflection.set(False)
         obj_shape.aiSelfShadows.set(False)
