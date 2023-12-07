@@ -1,14 +1,14 @@
-import sys
-sys.path.append('/Users/gracechen/anaconda3/lib/python3.11/site-packages')
-
 import numpy as np
 from PIL import Image
 from shading_path import shading_path
 from math import atan2, degrees
 import json
+import sys
 from pathlib import Path
 from palettes import get_path_type, PathType
 from enum import Enum
+
+import maya
 
 
 white = (255, 255, 255)
