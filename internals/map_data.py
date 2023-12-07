@@ -1,3 +1,6 @@
+import maya
+sys.stderr.write('able to import maya??')
+exit(1)
 import numpy as np
 from PIL import Image
 from shading_path import shading_path
@@ -8,7 +11,7 @@ from pathlib import Path
 from palettes import get_path_type, PathType
 from enum import Enum
 
-import maya
+
 
 
 white = (255, 255, 255)
