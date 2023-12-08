@@ -28,6 +28,9 @@ import json
 import subprocess
 from enum import Enum
 
+# interpreter_proc = subprocess.run(['which', 'python3'], capture_output=True)
+# interpreter = interpreter_proc.stdout.decode('utf-8').strip()
+
 from getpass import getuser
 username = getuser()
 if username == 'calder':

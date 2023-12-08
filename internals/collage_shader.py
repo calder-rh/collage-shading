@@ -19,9 +19,7 @@ def error(title, message):
 
 
 class Luminance(Network):
-    relevant_context = []
-    prefix = 'lum___'
-    delete = False
+    relevant_context = ['object']
 
     def __init__(self, context):
         # raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
@@ -79,7 +77,7 @@ class Luminance(Network):
 
         # self.luminance = curved_luminance
 
-        x = self.add(1, 0, 'placeholder_luminance')
+        x = self.add(1, 0, 'luminance')
         self.luminance = x
 
 
@@ -151,7 +149,7 @@ class FacetShader(Network):
 
         shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
         setAttr(f'{shade_ramp.name()}.type', 0)
-        self.build(Luminance({})).luminance >> shade_ramp.input
+        self.build(Luminance(context)).luminance >> shade_ramp.input
 
         for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):
             start_index = 2 * shade_index
