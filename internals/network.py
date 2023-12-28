@@ -100,11 +100,23 @@ def shading_node_makers(prefix, node_set, delete_setting):
     node_makers['divide'] = generic_float_math_node_maker(3)
     node_makers['power'] = generic_float_math_node_maker(6)
 
+    def universal_node_maker(function, node_name, **kwargs):
+        name = prefix + node_name
+        if objExists(name):
+            if delete_setting:
+                delete(name)
+            else:
+                return PyNode(name)
+        
+        return function(name=name, **kwargs)
+    
+    node_makers['make'] = universal_node_maker
+
     return node_makers
 
 
 class Network:
-    reserved_keys = ['utility', 'texture', 'shader', 'expression', 'blank', 'add', 'subtract', 'multiply', 'divide', 'nodes', 'subnetworks', 'node_keys', '__dict__', 'add_keys']
+    reserved_keys = ['utility', 'texture', 'shader', 'expression', 'blank', 'add', 'subtract', 'multiply', 'divide', 'make', 'nodes', 'subnetworks', 'node_keys', '__dict__', 'add_keys']
     all_abbreviations = {}
     
     def __init_subclass__(cls, **kwargs) -> None:

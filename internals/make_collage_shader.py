@@ -28,16 +28,10 @@ import json
 import subprocess
 from enum import Enum
 
-# interpreter_proc = subprocess.run(['which', 'python3'], capture_output=True)
-# interpreter = interpreter_proc.stdout.decode('utf-8').strip()
 
-from getpass import getuser
-username = getuser()
-if username == 'calder':
-    interpreter = '/Library/Frameworks/Python.framework/Versions/Current/bin/python3'
-elif username == 'gracechen':
-    interpreter = '/Users/gracechen/anaconda3/bin/python3'
-else:
+shell_name = subprocess.run('echo $SHELL', capture_output=True, shell=True).stdout.decode('utf-8').strip().split('/')[-1]
+interpreter = subprocess.run(f'source ~/.{shell_name}rc; which python3', capture_output=True, shell=True).stdout.decode('utf-8').strip()
+if not interpreter:
     interpreter = 'python3'
 
 

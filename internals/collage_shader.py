@@ -18,69 +18,6 @@ def error(title, message):
     exit()
 
 
-class Luminance(Network):
-    relevant_context = ['object']
-
-    def __init__(self, context):
-        # raw_luminance = self.utility('surfaceLuminance', 'raw_luminance')
-        # sc = ShadingController()
-        # facing_ratio = self.utility('aiFacingRatio', 'facing_ratio')
-
-        # noise = self.utility('aiNoise', 'luminance_noise')
-        # noise.coordSpace.set(3)
-        # y_scale = noise_scale
-        # x_scale = self.multiply(noise_scale, sc.aspect_ratio, 'u_scale')
-        # x_scale >> noise.scaleX
-        # noise.scaleY.set(y_scale)
-
-        # noise_projection = self.utility('projection', 'noise_projection')
-        # noise_projection.projType.set(8)
-        # sc.camera.camera_message >> noise_projection.linkedCamera
-        # noise.outColor >> noise_projection.image
-
-        # adjusted_noise = self.utility('remapValue', 'adjusted_noise')
-        # adjusted_noise.outputMin.set(1 - noise_adjustment)
-        # adjusted_noise.outputMax.set(1 + noise_adjustment)
-        # noise_projection.outColorR >> adjusted_noise.inputValue
-
-        # adjusted_luminance = self.multiply(raw_luminance.outValue, sc.luminance_factor, 'adjusted_luminance')
-        # noisy_luminance = self.multiply(adjusted_luminance, adjusted_noise.outValue, 'noisy_luminance')
-
-        # remap_luminance = self.utility('remapValue', 'remap_luminance')
-        # noisy_luminance >> remap_luminance.inputValue
-        # remap_luminance.value[0].value_Position.set(0)
-        # remap_luminance.value[0].value_FloatValue.set(0)
-        # remap_luminance.value[0].value_Interp.set(1)
-        # remap_luminance.value[1].value_Position.set(0.08)
-        # remap_luminance.value[1].value_FloatValue.set(0.45)
-        # remap_luminance.value[1].value_Interp.set(1)
-        # remap_luminance.value[2].value_Position.set(0.25)
-        # remap_luminance.value[2].value_FloatValue.set(0.75)
-        # remap_luminance.value[2].value_Interp.set(1)
-        # remap_luminance.value[3].value_Position.set(0.5)
-        # remap_luminance.value[3].value_FloatValue.set(0.9)
-        # remap_luminance.value[3].value_Interp.set(1)
-        # remap_luminance.value[4].value_Position.set(1)
-        # remap_luminance.value[4].value_FloatValue.set(1)
-        # remap_luminance.value[4].value_Interp.set(1)
-
-        # remapped_facing_ratio = self.utility('remapValue', 'remapped_facing_ratio')
-        # sc.edge_curve >> remapped_facing_ratio.outputMin
-        # sc.front_curve >> remapped_facing_ratio.outputMax
-        # facing_ratio.outValue >> remapped_facing_ratio.inputValue
-
-        # base = self.subtract(1, remap_luminance.outValue, 'base')
-        # one_over_rfr = self.divide(1, remapped_facing_ratio.outValue, 'one_over_rfr')
-        # exponent = self.subtract(one_over_rfr, 1, 'exponent')
-        # power = self.power(base, exponent, 'power')
-        # curved_luminance = self.subtract(1, power, 'curved_luminance')
-
-        # self.luminance = curved_luminance
-
-        x = self.add(1, 0, 'luminance')
-        self.luminance = x
-
-
 class FacetShader(Network):
     relevant_context = ['object', 'facet']
     
@@ -149,7 +86,8 @@ class FacetShader(Network):
 
         shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
         setAttr(f'{shade_ramp.name()}.type', 0)
-        self.build(Luminance(context)).luminance >> shade_ramp.input
+        luminance = self.add(1, 0, 'luminance')
+        luminance >> shade_ramp.input
 
         for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):
             start_index = 2 * shade_index
