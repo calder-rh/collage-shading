@@ -7,11 +7,14 @@ if code_path not in sys.path:
     sys.path.append(code_path)
 
 import importlib
-from internals import network, sun_pair, control_groups
+from internals import network, control_groups, shading_controller, sun_pair, invisible, lighting_controller
 importlib.reload(network)
-importlib.reload(sun_pair)
 importlib.reload(control_groups)
+importlib.reload(invisible)
+importlib.reload(sun_pair)
+importlib.reload(shading_controller)
+importlib.reload(lighting_controller)
 
-from internals.sun_pair import SunPair
+from internals.lighting_controller import LightingController
 
-t = SunPair({'usage': 'test'}, SCENE.light_origin, SCENE.sun_distance.outFloat, make_objects=True)
+t = LightingController({})

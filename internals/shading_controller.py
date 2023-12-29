@@ -1,5 +1,7 @@
 from pymel.core import *
 
+from internals.control_groups import ControlGroups
+
 
 class ShadingController:
     def __init__(self):
@@ -9,29 +11,64 @@ class ShadingController:
         if objExists(sc_name):
             node = PyNode(sc_name)
             self.camera = node.camera
-            self.aspect_ratio = node.aspect_ratio
-            self.luminance_factor = node.luminance_factor
-            self.edge_curve = node.edge_curve
-            self.front_curve = node.front_curve
+            self.aspect_ratio = self.camera.aspect_ratio
+            self.suns = node.suns
+            self.value_ranges = node.value_ranges
+            self.atmospheric_perspective = node.atmospheric_perspective
         else:
             node = group(n=sc_name, em=True)
+
+            cg = ControlGroups({})
+            parent(node, cg.internals)
 
             for attr in ['tx', 'ty', 'tz', 'rx', 'ry', 'rz', 'sx', 'sy', 'sz', 'v']:
                 node.setAttr(attr, k=False, cb=False)
 
-            addAttr(node, ln='camera', at='compound', nc=4)
+            addAttr(node, ln='camera', at='compound', nc=5)
             addAttr(node, p='camera', ln='camera_message', at='message')
             addAttr(node, p='camera', ln='inverse_world_matrix', at='matrix', dcb=2)
             addAttr(node, p='camera', ln='focal_length', dcb=2, dv=35)
             addAttr(node, p='camera', ln='horizontal_aperture', dcb=2, dv=1.417)
-            addAttr(node, ln='aspect_ratio', k=True, dv=16/9, dcb=2)
-            addAttr(node, ln='luminance_factor', min=0, smx=1, dv=1, k=True, dcb=2)
-            addAttr(node, ln='edge_curve', min=0, smx=0.5, max=1, dv=0.5, k=True)
-            addAttr(node, ln='front_curve', min=0, smx=0.5, max=1, dv=0.1, k=True)
+            addAttr(node, p='camera', ln='aspect_ratio', k=True, dv=16/9, dcb=2)
+
+            addAttr(node, ln='suns', at='compound', nc=5)
+            addAttr(node, p='suns', ln='sun_distance')
+            addAttr(node, p='suns', ln='world_sun_position', at='float3')
+            addAttr(node, ln='world_sun_position_x', at='float', p='world_sun_position')
+            addAttr(node, ln='world_sun_position_y', at='float', p='world_sun_position')
+            addAttr(node, ln='world_sun_position_z', at='float', p='world_sun_position')
+            addAttr(node, p='suns', ln='world_antisun_position', at='float3')
+            addAttr(node, ln='world_antisun_position_x', at='float', p='world_antisun_position')
+            addAttr(node, ln='world_antisun_position_y', at='float', p='world_antisun_position')
+            addAttr(node, ln='world_antisun_position_z', at='float', p='world_antisun_position')
+            addAttr(node, p='suns', ln='camera_sun_position', at='float3')
+            addAttr(node, ln='camera_sun_position_x', at='float', p='camera_sun_position')
+            addAttr(node, ln='camera_sun_position_y', at='float', p='camera_sun_position')
+            addAttr(node, ln='camera_sun_position_z', at='float', p='camera_sun_position')
+            addAttr(node, p='suns', ln='camera_antisun_position', at='float3')
+            addAttr(node, ln='camera_antisun_position_x', at='float', p='camera_antisun_position')
+            addAttr(node, ln='camera_antisun_position_y', at='float', p='camera_antisun_position')
+            addAttr(node, ln='camera_antisun_position_z', at='float', p='camera_antisun_position')
+
+            addAttr(node, ln='value_ranges', at='compound', nc=4)
+            addAttr(node, p='value_ranges', ln='front_min')
+            addAttr(node, p='value_ranges', ln='front_max')
+            addAttr(node, p='value_ranges', ln='back_min')
+            addAttr(node, p='value_ranges', ln='back_max')
+
+            addAttr(node, ln='atmospheric_perspective', at='compound', nc=3)
+            addAttr(node, p='atmospheric_perspective', ln='enable', at='bool')
+            addAttr(node, p='atmospheric_perspective', ln='half_distance')
+            addAttr(node, p='atmospheric_perspective', ln='color', at='float3', uac=True)
+            addAttr(node, ln='colorR', at='float', parent='color')
+            addAttr(node, ln='colorG', at='float', parent='color')
+            addAttr(node, ln='colorB', at='float', parent='color')
+            
             self.camera = node.camera
-            self.aspect_ratio = node.aspect_ratio
-            self.edge_curve = node.edge_curve
-            self.front_curve = node.front_curve
+            self.aspect_ratio = self.camera.aspect_ratio
+            self.suns = node.suns
+            self.value_ranges = node.value_ranges
+            self.atmospheric_perspective = node.atmospheric_perspective
 
             ref_shading_controllers = ls(regex=f'[^:]+:({sc_name}|{rscs_name})')
             if ref_shading_controllers:
@@ -42,22 +79,35 @@ class ShadingController:
             direct_ref_shading_controllers = ls(regex=f'[^:]+:{sc_name}')
             if direct_ref_shading_controllers:
                 for sc in direct_ref_shading_controllers:
-                    for attr in ['camera_message',
-                                 'inverse_world_matrix',
-                                 'focal_length',
-                                 'horizontal_aperture',
-                                 'aspect_ratio',
-                                 'luminance_factor',
-                                 'edge_curve',
-                                 'front_curve']:
-                        sc_attr = Attribute(sc + '.camera.' + attr)
+                    for attr in ['camera.camera_message',
+                                 'camera.inverse_world_matrix',
+                                 'camera.focal_length',
+                                 'camera.horizontal_aperture',
+                                 'camera.aspect_ratio',
+                                 
+                                 'suns.sun_distance',
+                                 'suns.world_sun_position',
+                                 'suns.world_antisun_position',
+                                 'suns.camera_sun_position',
+                                 'suns.camera_antisun_position',
+
+                                 'value_ranges.front_min',
+                                 'value_ranges.front_max',
+                                 'value_ranges.back_min',
+                                 'value_ranges.back_max',
+                                 
+                                 'atmospheric_perspective.enable',
+                                 'atmospheric_perspective.half_distance'
+                                 'atmospheric_perspective.color',
+                                 'atmospheric_perspective.colorR',
+                                 'atmospheric_perspective.colorG',
+                                 'atmospheric_perspective.colorB']:
+                        sc_attr = Attribute(sc + '.' + attr)
                         connections = listConnections(sc_attr, source=True, destination=False, plugs=True)
                         if connections:
                             connections[0] // sc_attr
-                        self_attr = Attribute(self.camera + '.' + attr)
+                        self_attr = Attribute(node + '.' + attr)
                         self_attr >> sc_attr
-                    self.luminance_factor >> sc.luminance_factor
-                    self.aspect_ratio >> sc.aspect_ratio
             
     def connect_camera(self, camera):
         camera_transform = camera.getTransform()

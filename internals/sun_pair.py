@@ -2,6 +2,8 @@ from pymel.core import *
 from internals.network import Network
 
 from internals.control_groups import ControlGroups
+from internals.shading_controller import ShadingController
+from internals.invisible import make_invisible_in_render
 
 
 class SunPairShaders(Network):
@@ -25,7 +27,7 @@ class SunPair(Network):
     relevant_context = ['usage']
     delete = False
 
-    def __init__(self, context, trans, sun_distance, make_objects=False):
+    def __init__(self, context, trans, make_objects=False):
         if make_objects:
             control_groups = ControlGroups({})
             sun_group = self.make(group, 'sun_group', em=True)
@@ -93,29 +95,17 @@ class SunPair(Network):
                 sets(shaders.sun_sg, e=True, fe=sun_shape)
                 sets(shaders.antisun_sg, e=True, fe=antisun_shape)
 
-                sun_shape.primaryVisibility.set(0)
-                sun_shape.castsShadows.set(0)
-                sun_shape.aiVisibleInDiffuseReflection.set(0)
-                sun_shape.aiVisibleInSpecularReflection.set(0)
-                sun_shape.aiVisibleInDiffuseTransmission.set(0)
-                sun_shape.aiVisibleInSpecularTransmission.set(0)
-                sun_shape.aiVisibleInVolume.set(0)
-                sun_shape.aiSelfShadows.set(0)
-
-                antisun_shape.primaryVisibility.set(0)
-                antisun_shape.castsShadows.set(0)
-                antisun_shape.aiVisibleInDiffuseReflection.set(0)
-                antisun_shape.aiVisibleInSpecularReflection.set(0)
-                antisun_shape.aiVisibleInDiffuseTransmission.set(0)
-                antisun_shape.aiVisibleInSpecularTransmission.set(0)
-                antisun_shape.aiVisibleInVolume.set(0)
-                antisun_shape.aiSelfShadows.set(0)
+                make_invisible_in_render(sun_shape)
+                make_invisible_in_render(antisun_shape)
 
                 parent(sun_trans, sun_group)
                 parent(antisun_trans, sun_group)
 
-                sun_distance >> sun_trans.tz
+                sc = ShadingController()
+                sun_distance = sc.suns.sun_distance
                 antisun_distance = self.multiply(sun_distance, -1, 'antisun_distance')
+
+                sun_distance >> sun_trans.tz
                 antisun_distance >> antisun_trans.tz
 
                 trans.r >> sun_group.r
@@ -129,6 +119,8 @@ class SunPair(Network):
             antisun_trans.worldMatrix[0] >> antisun_decomposer.inputMatrix
             self.antisun_position = antisun_decomposer.outputTranslate
         else:
+            sun_distance = ShadingController().suns.sun_distance
+
             rotation_matrix = self.utility('composeMatrix', 'rotation_matrix')
             trans.r >> rotation_matrix.inputRotate
 
