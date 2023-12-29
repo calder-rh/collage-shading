@@ -27,7 +27,7 @@ class SunPair(Network):
     relevant_context = ['usage']
     delete = False
 
-    def __init__(self, context, trans, make_objects=False):
+    def __init__(self, context, rotation, make_objects=False):
         if make_objects:
             control_groups = ControlGroups({})
             sun_group = self.make(group, 'sun_group', em=True)
@@ -108,7 +108,7 @@ class SunPair(Network):
                 sun_distance >> sun_trans.tz
                 antisun_distance >> antisun_trans.tz
 
-                trans.r >> sun_group.r
+                rotation >> sun_group.r
 
             sun_decomposer = self.utility('decomposeMatrix', 'sun_decomposer')
             antisun_decomposer = self.utility('decomposeMatrix', 'antisun_decomposer')
@@ -122,7 +122,7 @@ class SunPair(Network):
             sun_distance = ShadingController().suns.sun_distance
 
             rotation_matrix = self.utility('composeMatrix', 'rotation_matrix')
-            trans.r >> rotation_matrix.inputRotate
+            rotation >> rotation_matrix.inputRotate
 
             sun_matrix = self.utility('composeMatrix', 'sun_matrix')
             sun_distance >> sun_matrix.inputTranslateZ
@@ -147,3 +147,18 @@ class SunPair(Network):
 
             antisun_position_calculator.matrixSum >> antisun_decomposer.inputMatrix
             self.antisun_position = antisun_decomposer.outputTranslate
+        
+        direction_matrix_composer = self.utility('composeMatrix', 'direction_matrix_composer')
+        rotation >> direction_matrix_composer.inputRotate
+        direction_matrix_inverter = self.utility('inverseMatrix', 'direction_matrix_inverter')
+        direction_matrix_composer.outputMatrix >> direction_matrix_inverter.inputMatrix
+        self.direction_inverse_matrix = direction_matrix_inverter.outputMatrix
+
+        last_row_getter = self.utility('pointMatrixMult', 'last_row_getter')
+        direction_matrix_composer.outputMatrix >> last_row_getter.inMatrix
+        last_row_getter.inPoint.set((0, 0, 1))
+        sampler_info = self.utility('samplerInfo', 'sampler_info')
+        surface_dot = self.utility('aiDot', 'surface_dot')
+        sampler_info.pointWorld >> surface_dot.input1
+        last_row_getter.output >> surface_dot.input2
+        self.surface_point_z = surface_dot.outValue
