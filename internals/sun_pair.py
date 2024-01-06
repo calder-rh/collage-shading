@@ -24,6 +24,7 @@ class SunPairShaders(Network):
 
 
 class SunPair(Network):
+    abbreviation = 'suns'
     relevant_context = ['usage']
     delete = False
 

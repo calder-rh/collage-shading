@@ -21,7 +21,7 @@ def error(title, message):
 class FacetShader(Network):
     relevant_context = ['object', 'facet']
     
-    def __init__(self, context, masks_path, resolution, obj, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
+    def __init__(self, context, masks_path, resolution, obj, luminance, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
         multiple_facets = masks_path is not None
 
         orienter_transforms = None
@@ -86,7 +86,6 @@ class FacetShader(Network):
 
         shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
         setAttr(f'{shade_ramp.name()}.type', 0)
-        luminance = self.add(1, 0, 'luminance')
         luminance >> shade_ramp.input
 
         for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):
@@ -176,6 +175,8 @@ class CollageShader(Network):
 
         last_texture = None
 
+        luminance = self.utility('plusMinusAverage', 'luminance')
+
         shader_color = None
         for facet_index in range(num_facets):
             facet_settings = all_facet_settings[facet_index]
@@ -187,7 +188,7 @@ class CollageShader(Network):
             if not multiple_facets:
                 masks_path = None
                 resolution = None
-            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, facet_index, facet_settings, facet_center, self.orienter_group_name, orienter_transform_path), add_keys=False)
+            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, luminance.output1D, facet_index, facet_settings, facet_center, self.orienter_group_name, orienter_transform_path), add_keys=False)
             
             if not multiple_facets:
                 shader_color = facet_shader.color

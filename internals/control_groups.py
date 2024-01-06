@@ -13,3 +13,5 @@ class ControlGroups(Network):
         parent(self.internals, self.shading_controls)
         self.sun_pairs = self.make(group, 'sun_pairs', em=True)
         parent(self.sun_pairs, self.internals)
+        self.lighting_groups = self.make(group, 'lighting_groups', em=True)
+        parent(self.lighting_groups, self.internals)
