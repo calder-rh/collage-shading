@@ -1,8 +1,7 @@
 from pymel.core import *
 from internals.network import Network
 
-from internals.control_groups import ControlGroups
-from internals.shading_controller import ShadingController
+from internals.control_groups import control_groups
 from internals.invisible import make_invisible_in_render
 
 
@@ -28,9 +27,8 @@ class SunPair(Network):
     relevant_context = ['usage']
     delete = False
 
-    def __init__(self, context, rotation, make_objects=False):
+    def __init__(self, _, rotation, sun_distance, make_objects=False):
         if make_objects:
-            control_groups = ControlGroups({})
             sun_group = self.make(group, 'sun_group', em=True)
             parent(sun_group, control_groups.sun_pairs)
 
@@ -102,8 +100,6 @@ class SunPair(Network):
                 parent(sun_trans, sun_group)
                 parent(antisun_trans, sun_group)
 
-                sc = ShadingController()
-                sun_distance = sc.suns.sun_distance
                 antisun_distance = self.multiply(sun_distance, -1, 'antisun_distance')
 
                 sun_distance >> sun_trans.tz
@@ -120,8 +116,6 @@ class SunPair(Network):
             antisun_trans.worldMatrix[0] >> antisun_decomposer.inputMatrix
             self.antisun_position = antisun_decomposer.outputTranslate
         else:
-            sun_distance = ShadingController().suns.sun_distance
-
             rotation_matrix = self.utility('composeMatrix', 'rotation_matrix')
             rotation >> rotation_matrix.inputRotate
 

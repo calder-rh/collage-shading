@@ -8,10 +8,12 @@ class ControlGroups(Network):
     delete = False
     
     def __init__(self, _):
-        self.shading_controls = self.make(group, 'shading_controls', em=True)
+        self.controls = self.make(group, 'collage_shading', em=True)
         self.internals = self.make(group, 'internals', em=True)
-        parent(self.internals, self.shading_controls)
+        parent(self.internals, self.controls)
         self.sun_pairs = self.make(group, 'sun_pairs', em=True)
         parent(self.sun_pairs, self.internals)
-        self.lighting_groups = self.make(group, 'lighting_groups', em=True)
-        parent(self.lighting_groups, self.internals)
+        self.illuminees = self.make(group, 'illuminees', em=True)
+        parent(self.illuminees, self.internals)
+
+control_groups = ControlGroups({})

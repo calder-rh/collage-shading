@@ -1,6 +1,6 @@
 from pymel.core import *
 from internals.network import Network
-from internals.shading_controller import ShadingController
+from internals.global_controls.node import global_controls
 
 
 class FocalLengthFactor(Network):
@@ -15,33 +15,31 @@ class FocalLengthFactor(Network):
         expr = f'focal_length_factor = focal_length / (horizontal_aperture * {millimeters_per_inch});'
         node = self.expression('focal_length_factor', attrs, expr)
         
-        sc = ShadingController()
-        sc.camera.horizontal_aperture >> node.horizontal_aperture
-        sc.camera.focal_length >> node.focal_length        
+        global_controls.node.camera.horizontal_aperture >> node.horizontal_aperture
+        global_controls.node.camera.focal_length >> node.focal_length        
 
         self.focal_length_factor = node.focal_length_factor
 
 
 class ScreenPlacement(Network):
-    relevant_context = ['object', 'facet']
+    relevant_context = ['mesh', 'facet']
     
     def __init__(self, context, world_placement, image_up):
-        sc = ShadingController()
         flf = self.build(FocalLengthFactor({}))
 
         # Find the location of the object in the space of the camera
         obj_center_cs = self.utility('pointMatrixMult', 'obj_center_cs')
-        sc.camera.inverse_world_matrix >> obj_center_cs.inMatrix
+        global_controls.node.camera.inverse_world_matrix >> obj_center_cs.inMatrix
         world_placement.obj_center_ws >> obj_center_cs.inPoint
 
         # Find the location of the facet in the space of the camera
         facet_center_cs = self.utility('pointMatrixMult', 'facet_center_cs')
-        sc.camera.inverse_world_matrix >> facet_center_cs.inMatrix
+        global_controls.node.camera.inverse_world_matrix >> facet_center_cs.inMatrix
         world_placement.facet_center_ws >> facet_center_cs.inPoint
 
         # Find the location of the orienter in the space of the camera
         orienter_cs = self.utility('pointMatrixMult', 'orienter_cs')
-        sc.camera.inverse_world_matrix >> orienter_cs.inMatrix
+        global_controls.node.camera.inverse_world_matrix >> orienter_cs.inMatrix
         world_placement.rotation_ws >> orienter_cs.inPoint
 
         attrs = ['obj_size',

@@ -4,7 +4,7 @@ from math import floor
 
 
 class CoordinateConverter(Network):
-    relevant_context = ['object']
+    relevant_context = ['mesh']
 
     def __init__(self, context, obj):
         self.transform = obj.getTransform()

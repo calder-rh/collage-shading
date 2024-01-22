@@ -5,10 +5,10 @@ from internals.control_groups import ControlGroups
 import time
 
 
-class LightDarkZs(Network):
+class MeshExtrema(Network):
     relevant_context = ['mesh', 'sun_pair']
 
-    def __init__(self, context, mesh, sun_position, antisun_position, direction_inverse_matrix):
+    def __init__(self, _, mesh, sun_position, antisun_position, direction_inverse_matrix):
         trans = mesh
         shape = trans.getShape()
         
@@ -47,14 +47,14 @@ class MeasuredGradient(Network):
         lighting_group = group(name=timestamp_name, em=True)
         addAttr(lighting_group, ln='members', multi=True)
         cg = ControlGroups({})
-        parent(lighting_group, cg.lighting_groups)
+        parent(lighting_group, cg.illuminees)
 
         for i, mesh in enumerate(meshes):
             if mesh.type() == 'transform':
                 trans = mesh
             else:
                 trans = mesh.getTransform()
-            mesh_ldzs = self.build(LightDarkZs({'mesh': trans.name(), 'sun_pair': context['sun_pair']}, trans, sun_position, antisun_position, direction_inverse_matrix), add_keys=False)
+            mesh_ldzs = self.build(MeshExtrema({'mesh': trans.name(), 'sun_pair': context['sun_pair']}, trans, sun_position, antisun_position, direction_inverse_matrix), add_keys=False)
             mesh_ldzs.light_z >> light_z_calculator.input[i]
             mesh_ldzs.dark_z >> dark_z_calculator.input[i]
 

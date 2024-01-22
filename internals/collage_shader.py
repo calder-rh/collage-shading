@@ -4,7 +4,6 @@ from internals import palettes
 from internals.world_placement import RigidWorldPlacement
 from internals.screen_placement import ScreenPlacement
 from internals.tracking_projection import TrackingProjection
-from internals.shading_controller import ShadingController
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
 import json, re
@@ -19,7 +18,7 @@ def error(title, message):
 
 
 class FacetShader(Network):
-    relevant_context = ['object', 'facet']
+    relevant_context = ['mesh', 'facet']
     
     def __init__(self, context, masks_path, resolution, obj, luminance, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
         multiple_facets = masks_path is not None
@@ -123,8 +122,8 @@ class FacetShader(Network):
 
 
 class CollageShader(Network):
-    relevant_context = ['object']
-    delete = ['object']
+    relevant_context = ['mesh']
+    delete = ['mesh']
 
     def __init__(self, context, obj, map_image_path):
         obj = obj.getTransform()

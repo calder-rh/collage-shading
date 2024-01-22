@@ -1,15 +1,13 @@
 from pymel.core import *
 from internals.network import Network
-from internals.shading_controller import ShadingController
+from internals.global_controls import global_controls
 from internals.shading_path import relative_path
 
 
 class TrackingProjectionPlacement(Network):
-    relevant_context = ['object', 'facet', 'image']
+    relevant_context = ['mesh', 'facet', 'image']
 
     def __init__(self, context, screen_placement, facet_image):
-        sc = ShadingController()
-
         attrs = ['center_ss_x',
                  'center_ss_y',
                  'rotation_ss',
@@ -55,13 +53,13 @@ rotate_uv = $final_rotation;
         node.image_x.set(facet_image.x)
         node.image_y.set(facet_image.y)
         node.image_scale.set(facet_image.scale)
-        sc.aspect_ratio >> node.aspect_ratio
+        global_controls.node.camera.aspect_ratio >> node.aspect_ratio
 
         # Create the image placement node
         texture_placement = self.utility('place2dTexture', 'texture_placement')
         # Plug in the values we calculated
         texture_placement.coverageU.set(1)
-        sc.aspect_ratio >> texture_placement.coverageV
+        global_controls.node.camera.aspect_ratio >> texture_placement.coverageV
 
         node.translate_frame_u >> texture_placement.translateFrameU
         node.translate_frame_v >> texture_placement.translateFrameV
@@ -73,7 +71,7 @@ rotate_uv = $final_rotation;
 
 
 class TrackingProjection(Network):
-    relevant_context = ['object', 'facet', 'image']
+    relevant_context = ['mesh', 'facet', 'image']
 
     def __init__(self, context, screen_placement, facet_image, reuse_placement):
         if reuse_placement:
@@ -89,32 +87,32 @@ class TrackingProjection(Network):
         image_texture.fileTextureName.set(facet_image.image, type='string')
 
         # Connect placement to texture
-        self.texture_placement.outUV.connect(image_texture.uvCoord)
-        self.texture_placement.outUvFilterSize.connect(image_texture.uvFilterSize)
-        self.texture_placement.vertexCameraOne.connect(image_texture.vertexCameraOne)
-        self.texture_placement.vertexUvOne.connect(image_texture.vertexUvOne)
-        self.texture_placement.vertexUvThree.connect(image_texture.vertexUvThree)
-        self.texture_placement.vertexUvTwo.connect(image_texture.vertexUvTwo)
-        self.texture_placement.coverage.connect(image_texture.coverage)
-        self.texture_placement.mirrorU.connect(image_texture.mirrorU)
-        self.texture_placement.mirrorV.connect(image_texture.mirrorV)
-        self.texture_placement.noiseUV.connect(image_texture.noiseUV)
-        self.texture_placement.offset.connect(image_texture.offset)
-        self.texture_placement.repeatUV.connect(image_texture.repeatUV)
-        self.texture_placement.rotateFrame.connect(image_texture.rotateFrame)
-        self.texture_placement.rotateUV.connect(image_texture.rotateUV)
-        self.texture_placement.stagger.connect(image_texture.stagger)
-        self.texture_placement.translateFrame.connect(image_texture.translateFrame)
-        self.texture_placement.wrapU.connect(image_texture.wrapU)
-        self.texture_placement.wrapV.connect(image_texture.wrapV)
+        self.texture_placement.outUV >> image_texture.uvCoord
+        self.texture_placement.outUvFilterSize >> image_texture.uvFilterSize
+        self.texture_placement.vertexCameraOne >> image_texture.vertexCameraOne
+        self.texture_placement.vertexUvOne >> image_texture.vertexUvOne
+        self.texture_placement.vertexUvThree >> image_texture.vertexUvThree
+        self.texture_placement.vertexUvTwo >> image_texture.vertexUvTwo
+        self.texture_placement.coverage >> image_texture.coverage
+        self.texture_placement.mirrorU >> image_texture.mirrorU
+        self.texture_placement.mirrorV >> image_texture.mirrorV
+        self.texture_placement.noiseUV >> image_texture.noiseUV
+        self.texture_placement.offset >> image_texture.offset
+        self.texture_placement.repeatUV >> image_texture.repeatUV
+        self.texture_placement.rotateFrame >> image_texture.rotateFrame
+        self.texture_placement.rotateUV >> image_texture.rotateUV
+        self.texture_placement.stagger >> image_texture.stagger
+        self.texture_placement.translateFrame >> image_texture.translateFrame
+        self.texture_placement.wrapU >> image_texture.wrapU
+        self.texture_placement.wrapV >> image_texture.wrapV
 
         # Create the projection
         projection = self.utility('projection', 'projection')
         # Set it to a perspective projection
         projection.projType.set(8)
         # From the desired camera
-        ShadingController().camera.camera_message.connect(projection.linkedCamera)
+        global_controls.node.camera.camera_message >> projection.linkedCamera
         # Set the image
-        image_texture.outColor.connect(projection.image)
+        image_texture.outColor >> projection.image
 
         self.color = projection.outColor

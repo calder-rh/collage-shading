@@ -3,7 +3,7 @@ from pymel.core import *
 from internals.control_groups import ControlGroups
 
 
-class ShadingController:
+class ShadingControllerDeprecated:
     def __init__(self):
         sc_name = 'shading_controller'
         rscs_name = 'ref_shading_controllers'

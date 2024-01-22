@@ -20,7 +20,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     if masks_exist and surface_values_path.exists():
         return surface_values_path
 
-    converter = CoordinateConverter({'object': format_unique_name(obj)}, obj)
+    converter = CoordinateConverter({'mesh': format_unique_name(obj)}, obj)
 
     with open(map_data_path) as file:
         map_data = json.load(file)

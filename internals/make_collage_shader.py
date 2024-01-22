@@ -1,10 +1,10 @@
 from pymel.core import *
 
 import importlib
-from internals import network, shading_path, shading_controller, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, make_collage_shader, unique_name
+from internals import network, shading_path, global_controls, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, make_collage_shader, unique_name
 importlib.reload(network)
 importlib.reload(shading_path)
-importlib.reload(shading_controller)
+importlib.reload(global_controls)
 importlib.reload(surface_values)
 importlib.reload(coordinate_converter)
 importlib.reload(palettes)
@@ -151,4 +151,4 @@ def run():
             obj = node
         else:
             continue
-        CollageShader({'object': format_unique_name(obj)}, obj, map_image_path)
+        CollageShader({'mesh': format_unique_name(obj)}, obj, map_image_path)

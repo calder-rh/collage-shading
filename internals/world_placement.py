@@ -3,7 +3,7 @@ from internals.network import Network
 
 
 class RigidWorldPlacement(Network):
-    relevant_context = ['object', 'facet']
+    relevant_context = ['mesh', 'facet']
 
     def __init__(self, context, obj, center_os, orienter_os):
         obj_matrix = obj.worldMatrix[0]

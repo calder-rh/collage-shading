@@ -1,18 +1,18 @@
 from pymel.core import *
 
 import importlib
-from internals import network, shading_controller
+from internals import network, control_groups, sun_pair, global_controls
 importlib.reload(network)
-importlib.reload(shading_controller)
+importlib.reload(control_groups)
+importlib.reload(sun_pair)
+importlib.reload(global_controls)
 
-from internals.shading_controller import ShadingController
-
+from internals.global_controls import global_controls
 
 def run():
     selection = ls(sl=True)
     if not selection:
-        sc = ShadingController()
-        sc.disconnect_camera()
+        global_controls.disconnect_camera()
     elif len(selection) == 1:
         node = selection[0]
         if node.type() == 'camera':
@@ -22,8 +22,7 @@ def run():
         else:
             confirmDialog(t='Error', m='Please select a camera.', b='OK', cb='OK', db='OK', icon='warning', ma='left')
             exit()
-        sc = ShadingController()
-        sc.connect_camera(cam)
+        global_controls.connect_camera(cam)
     else:
         confirmDialog(t='Error', m='Please select only one camera.', b='OK', cb='OK', db='OK', icon='warning', ma='left')
         exit()
