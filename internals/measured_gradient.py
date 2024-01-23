@@ -36,36 +36,38 @@ class MeshExtrema(Network):
         self.dark_z = dark_point_z_calculator.outputZ
 
 
-class MeasuredGradient(Network):
-    relevant_context = ['meshes', 'sun_pair']
+# TODO move this to illuminee
 
-    def __init__(self, context, meshes, sun_position, antisun_position, direction_inverse_matrix, surface_point_z):
-        dark_z_calculator = self.utility('min', 'dark_z_calculator')
-        light_z_calculator = self.utility('max', 'light_z_calculator')
+# class MeasuredGradient(Network):
+#     relevant_context = ['meshes', 'sun_pair']
 
-        timestamp_name = 'lg_' + str(time.time()).replace('.', '_')
-        lighting_group = group(name=timestamp_name, em=True)
-        addAttr(lighting_group, ln='members', multi=True)
-        cg = ControlGroups({})
-        parent(lighting_group, cg.illuminees)
+#     def __init__(self, context, meshes, sun_position, antisun_position, direction_inverse_matrix, surface_point_z):
+#         dark_z_calculator = self.utility('min', 'dark_z_calculator')
+#         light_z_calculator = self.utility('max', 'light_z_calculator')
 
-        for i, mesh in enumerate(meshes):
-            if mesh.type() == 'transform':
-                trans = mesh
-            else:
-                trans = mesh.getTransform()
-            mesh_ldzs = self.build(MeshExtrema({'mesh': trans.name(), 'sun_pair': context['sun_pair']}, trans, sun_position, antisun_position, direction_inverse_matrix), add_keys=False)
-            mesh_ldzs.light_z >> light_z_calculator.input[i]
-            mesh_ldzs.dark_z >> dark_z_calculator.input[i]
+#         timestamp_name = 'lg_' + str(time.time()).replace('.', '_')
+#         lighting_group = group(name=timestamp_name, em=True)
+#         addAttr(lighting_group, ln='members', multi=True)
+#         cg = ControlGroups({})
+#         parent(lighting_group, cg.illuminees)
 
-            if not hasAttr(mesh, 'lighting_group'):
-                addAttr(mesh, ln='lighting_group')
-            mesh.lighting_group >> lighting_group.members[i]
+#         for i, mesh in enumerate(meshes):
+#             if mesh.type() == 'transform':
+#                 trans = mesh
+#             else:
+#                 trans = mesh.getTransform()
+#             mesh_ldzs = self.build(MeshExtrema({'mesh': trans.name(), 'sun_pair': context['sun_pair']}, trans, sun_position, antisun_position, direction_inverse_matrix), add_keys=False)
+#             mesh_ldzs.light_z >> light_z_calculator.input[i]
+#             mesh_ldzs.dark_z >> dark_z_calculator.input[i]
+
+#             if not hasAttr(mesh, 'lighting_group'):
+#                 addAttr(mesh, ln='lighting_group')
+#             mesh.lighting_group >> lighting_group.members[i]
         
-        gradient_calculator = self.utility('remapValue', 'gradient_calculator')
-        dark_z_calculator.output >> gradient_calculator.inputMin
-        light_z_calculator.output >> gradient_calculator.inputMax
-        surface_point_z >> gradient_calculator.inputValue
-        self.gradient_value = gradient_calculator.outValue
+#         gradient_calculator = self.utility('remapValue', 'gradient_calculator')
+#         dark_z_calculator.output >> gradient_calculator.inputMin
+#         light_z_calculator.output >> gradient_calculator.inputMax
+#         surface_point_z >> gradient_calculator.inputValue
+#         self.gradient_value = gradient_calculator.outValue
         
         

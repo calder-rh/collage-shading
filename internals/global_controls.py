@@ -6,16 +6,19 @@ from internals.invisible import make_invisible_in_render
 from internals.sun_pair import SunPair, SunPairShaders
 
 
+
 class GlobalControls(Network):
     relevant_context = []
     prefix = ''
     delete = False
 
+    node_name = 'global_controls'
+
     def __init__(self, _):
-        is_new = not objExists('global_controls')
+        is_new = not objExists(self.node_name)
 
         if is_new:
-            lighting_controller_trans, _ = self.poly(polyCube, 'global_controls')
+            lighting_controller_trans, _ = self.poly(polyCube, self.node_name)
             setAttr(lighting_controller_trans.r, l=True)
             lighting_controller_shape = lighting_controller_trans.getShape()
             make_invisible_in_render(lighting_controller_shape)
@@ -130,6 +133,10 @@ class GlobalControls(Network):
             connections = listConnections(attr, source=True, destination=False, plugs=True)
             if connections:
                 connections[0] // attr
+    
+    def reload(self):
+        ...
 
 
 global_controls = GlobalControls({})
+gcn = global_controls.node

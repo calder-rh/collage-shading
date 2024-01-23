@@ -7,11 +7,13 @@ if code_path not in sys.path:
     sys.path.append(code_path)
 
 import importlib
-from internals import global_controls, network, control_groups, sun_pair
+from internals import network, control_groups, sun_pair, global_controls, illuminee
 importlib.reload(network)
 importlib.reload(control_groups)
 importlib.reload(sun_pair)
 importlib.reload(global_controls)
+importlib.reload(illuminee)
 
-from internals.global_controls import global_controls
-
+from internals.illuminee import Illuminee
+i = Illuminee({})
+select(i.control_node, ne=True)

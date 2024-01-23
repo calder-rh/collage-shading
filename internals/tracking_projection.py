@@ -1,6 +1,6 @@
 from pymel.core import *
 from internals.network import Network
-from internals.global_controls import global_controls
+from internals.global_controls import gcn
 from internals.shading_path import relative_path
 
 
@@ -53,13 +53,13 @@ rotate_uv = $final_rotation;
         node.image_x.set(facet_image.x)
         node.image_y.set(facet_image.y)
         node.image_scale.set(facet_image.scale)
-        global_controls.node.camera.aspect_ratio >> node.aspect_ratio
+        gcn.camera.aspect_ratio >> node.aspect_ratio
 
         # Create the image placement node
         texture_placement = self.utility('place2dTexture', 'texture_placement')
         # Plug in the values we calculated
         texture_placement.coverageU.set(1)
-        global_controls.node.camera.aspect_ratio >> texture_placement.coverageV
+        gcn.camera.aspect_ratio >> texture_placement.coverageV
 
         node.translate_frame_u >> texture_placement.translateFrameU
         node.translate_frame_v >> texture_placement.translateFrameV
@@ -111,7 +111,7 @@ class TrackingProjection(Network):
         # Set it to a perspective projection
         projection.projType.set(8)
         # From the desired camera
-        global_controls.node.camera.camera_message >> projection.linkedCamera
+        gcn.camera.camera_message >> projection.linkedCamera
         # Set the image
         image_texture.outColor >> projection.image
 
