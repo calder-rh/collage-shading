@@ -1,8 +1,8 @@
 from pymel.core import *
 from internals.network import Network
 
-from internals.control_groups import control_groups
-from internals.invisible import make_invisible_in_render
+from internals.global_groups import control_groups
+from internals.invisible import set_visibility_in_render
 from internals.sun_pair import SunPair, SunPairShaders
 
 
@@ -21,7 +21,7 @@ class GlobalControls(Network):
             lighting_controller_trans, _ = self.poly(polyCube, self.node_name)
             setAttr(lighting_controller_trans.r, l=True)
             lighting_controller_shape = lighting_controller_trans.getShape()
-            make_invisible_in_render(lighting_controller_shape)
+            set_visibility_in_render(lighting_controller_shape, False)
             parent(lighting_controller_trans, control_groups.controls)
             delete(lighting_controller_trans, ch=True)
 
@@ -39,78 +39,80 @@ class GlobalControls(Network):
             parent(light_direction_trans, lighting_controller_trans)
             setAttr(light_direction_trans.t, l=True)
             setAttr(light_direction_trans.s, l=True)
-            make_invisible_in_render(light_direction_shape)
+            set_visibility_in_render(light_direction_shape, False)
 
-            gc = lighting_controller_trans
-            addAttr(gc, ln='gradients', min=0, smx=1, dv=1)
-            addAttr(gc, ln='lights', min=0, smx=1, dv=1)
-            addAttr(gc, ln='shadow_influences', min=0, smx=1, dv=1)
+            gcn = lighting_controller_trans
+            addAttr(gcn, ln='gradients_weight', min=0, smx=1, dv=1)
+            addAttr(gcn, ln='lights_weight', min=0, smx=1, dv=1)
+            addAttr(gcn, ln='shadow_influences_weight', min=0, smx=1, dv=0.5)
 
-            addAttr(gc, ln='front_value_range', at='compound', nc=2)
-            addAttr(gc, p='front_value_range', ln='front_min', min=0, max=1, dv=0)
-            addAttr(gc, p='front_value_range', ln='front_max', min=0, max=1, dv=1)
+            addAttr(gcn, ln='shadow_influences_distance', min=0, smx=1, dv=1)
 
-            addAttr(gc, ln='back_value_range', at='compound', nc=2)
-            addAttr(gc, p='back_value_range', ln='back_min', min=0, max=1, dv=0.3)
-            addAttr(gc, p='back_value_range', ln='back_max', min=0, max=1, dv=0.7)
+            addAttr(gcn, ln='front_value_range', at='compound', nc=2)
+            addAttr(gcn, p='front_value_range', ln='front_min', min=0, max=1, dv=0)
+            addAttr(gcn, p='front_value_range', ln='front_max', min=0, max=1, dv=1)
 
-            addAttr(gc, ln='sun_distance', min=0, smx=1000, dv=100)
+            addAttr(gcn, ln='back_value_range', at='compound', nc=2)
+            addAttr(gcn, p='back_value_range', ln='back_min', min=0, max=1, dv=0.3)
+            addAttr(gcn, p='back_value_range', ln='back_max', min=0, max=1, dv=0.7)
+
+            addAttr(gcn, ln='default_lightness', min=0, max=1, dv=0.5)
+
+            addAttr(gcn, ln='sun_distance', min=0, smx=1000, dv=100)
             
-            addAttr(gc, ln='atmospheric_perspective', at='compound', nc=3)
-            addAttr(gc, p='atmospheric_perspective', ln='enable', at='bool')
-            addAttr(gc, p='atmospheric_perspective', ln='half_distance', min=1, smx=1000, dv=100)
-            addAttr(gc, p='atmospheric_perspective', ln='color', at='float3', uac=True)
-            addAttr(gc, ln='colorR', at='float', parent='color')
-            addAttr(gc, ln='colorG', at='float', parent='color')
-            addAttr(gc, ln='colorB', at='float', parent='color')
+            addAttr(gcn, ln='atmospheric_perspective', at='compound', nc=3)
+            addAttr(gcn, p='atmospheric_perspective', ln='enable', at='bool')
+            addAttr(gcn, p='atmospheric_perspective', ln='half_distance', min=1, smx=1000, dv=100)
+            addAttr(gcn, p='atmospheric_perspective', ln='color', at='float3', uac=True)
+            addAttr(gcn, ln='colorR', at='float', parent='color')
+            addAttr(gcn, ln='colorG', at='float', parent='color')
+            addAttr(gcn, ln='colorB', at='float', parent='color')
             lighting_controller_trans.atmospheric_perspective.color.set(0.5, 0.7, 1)
 
-            addAttr(gc, ln='camera', at='compound', nc=6)
-            addAttr(gc, p='camera', ln='camera_message', at='message')
-            addAttr(gc, p='camera', ln='world_matrix', at='matrix')
-            addAttr(gc, p='camera', ln='inverse_world_matrix', at='matrix')
-            addAttr(gc, p='camera', ln='focal_length', dv=35)
-            addAttr(gc, p='camera', ln='horizontal_aperture', dv=1.417)
-            addAttr(gc, p='camera', ln='aspect_ratio', k=True, dv=16/9)
+            addAttr(gcn, ln='camera', at='compound', nc=6)
+            addAttr(gcn, p='camera', ln='camera_message', at='message')
+            addAttr(gcn, p='camera', ln='world_matrix', at='matrix')
+            addAttr(gcn, p='camera', ln='inverse_world_matrix', at='matrix')
+            addAttr(gcn, p='camera', ln='focal_length', dv=35)
+            addAttr(gcn, p='camera', ln='horizontal_aperture', dv=1.417)
+            addAttr(gcn, p='camera', ln='aspect_ratio', k=True, dv=16/9)
 
-            addAttr(gc, ln='suns', at='compound', nc=8)
-            addAttr(gc, p='suns', ln='light_sun_position', at='float3')
-            addAttr(gc, ln='light_sun_position_x', at='float', p='light_sun_position')
-            addAttr(gc, ln='light_sun_position_y', at='float', p='light_sun_position')
-            addAttr(gc, ln='light_sun_position_z', at='float', p='light_sun_position')
-            addAttr(gc, p='suns', ln='light_antisun_position', at='float3')
-            addAttr(gc, ln='light_antisun_position_x', at='float', p='light_antisun_position')
-            addAttr(gc, ln='light_antisun_position_y', at='float', p='light_antisun_position')
-            addAttr(gc, ln='light_antisun_position_z', at='float', p='light_antisun_position')
-            addAttr(gc, ln='light_direction_inverse_matrix', at='matrix', p='suns')
-            addAttr(gc, ln='light_surface_point_z', p='suns')
-            addAttr(gc, p='suns', ln='camera_sun_position', at='float3')
-            addAttr(gc, ln='camera_sun_position_x', at='float', p='camera_sun_position')
-            addAttr(gc, ln='camera_sun_position_y', at='float', p='camera_sun_position')
-            addAttr(gc, ln='camera_sun_position_z', at='float', p='camera_sun_position')
-            addAttr(gc, p='suns', ln='camera_antisun_position', at='float3')
-            addAttr(gc, ln='camera_antisun_position_x', at='float', p='camera_antisun_position')
-            addAttr(gc, ln='camera_antisun_position_y', at='float', p='camera_antisun_position')
-            addAttr(gc, ln='camera_antisun_position_z', at='float', p='camera_antisun_position')
-            addAttr(gc, ln='camera_direction_inverse_matrix', at='matrix', p='suns')
-            addAttr(gc, ln='camera_surface_point_z', p='suns')
+            addAttr(gcn, ln='suns', at='compound', nc=8)
+            addAttr(gcn, p='suns', ln='light_sun_position', at='float3')
+            addAttr(gcn, ln='light_sun_position_x', at='float', p='light_sun_position')
+            addAttr(gcn, ln='light_sun_position_y', at='float', p='light_sun_position')
+            addAttr(gcn, ln='light_sun_position_z', at='float', p='light_sun_position')
+            addAttr(gcn, p='suns', ln='light_antisun_position', at='float3')
+            addAttr(gcn, ln='light_antisun_position_x', at='float', p='light_antisun_position')
+            addAttr(gcn, ln='light_antisun_position_y', at='float', p='light_antisun_position')
+            addAttr(gcn, ln='light_antisun_position_z', at='float', p='light_antisun_position')
+            addAttr(gcn, ln='light_direction_inverse_matrix', at='matrix', p='suns')
+            addAttr(gcn, ln='light_surface_point_z', p='suns')
+            addAttr(gcn, p='suns', ln='camera_sun_position', at='float3')
+            addAttr(gcn, ln='camera_sun_position_x', at='float', p='camera_sun_position')
+            addAttr(gcn, ln='camera_sun_position_y', at='float', p='camera_sun_position')
+            addAttr(gcn, ln='camera_sun_position_z', at='float', p='camera_sun_position')
+            addAttr(gcn, p='suns', ln='camera_antisun_position', at='float3')
+            addAttr(gcn, ln='camera_antisun_position_x', at='float', p='camera_antisun_position')
+            addAttr(gcn, ln='camera_antisun_position_y', at='float', p='camera_antisun_position')
+            addAttr(gcn, ln='camera_antisun_position_z', at='float', p='camera_antisun_position')
+            addAttr(gcn, ln='camera_direction_inverse_matrix', at='matrix', p='suns')
+            addAttr(gcn, ln='camera_surface_point_z', p='suns')
 
-            addAttr(gc, ln='collage_lights', m=True)
-
-            light_sun_pair = SunPair({'usage': 'light'}, light_direction_trans.r, gc.sun_distance, make_objects=True)
+            light_sun_pair = SunPair({'usage': 'light'}, light_direction_trans.r, gcn.sun_distance, make_objects=True)
             camera_rotation_calculator = self.utility('decomposeMatrix', 'camera_rotation_calculator')
-            camera_sun_pair = SunPair({'usage': 'camera'}, camera_rotation_calculator.outputRotate, gc.sun_distance)
+            camera_sun_pair = SunPair({'usage': 'camera'}, camera_rotation_calculator.outputRotate, gcn.sun_distance)
 
-            light_sun_pair.sun_position >> gc.suns.light_sun_position
-            light_sun_pair.antisun_position >> gc.suns.light_antisun_position
-            light_sun_pair.direction_inverse_matrix >> gc.suns.light_direction_inverse_matrix
-            light_sun_pair.surface_point_z >> gc.suns.light_surface_point_z
-            camera_sun_pair.sun_position >> gc.suns.camera_sun_position
-            camera_sun_pair.antisun_position >> gc.suns.camera_antisun_position
-            camera_sun_pair.direction_inverse_matrix >> gc.suns.camera_direction_inverse_matrix
-            camera_sun_pair.surface_point_z >> gc.suns.camera_surface_point_z
+            light_sun_pair.sun_position >> gcn.suns.light_sun_position
+            light_sun_pair.antisun_position >> gcn.suns.light_antisun_position
+            light_sun_pair.direction_inverse_matrix >> gcn.suns.light_direction_inverse_matrix
+            light_sun_pair.surface_point_z >> gcn.suns.light_surface_point_z
+            camera_sun_pair.sun_position >> gcn.suns.camera_sun_position
+            camera_sun_pair.antisun_position >> gcn.suns.camera_antisun_position
+            camera_sun_pair.direction_inverse_matrix >> gcn.suns.camera_direction_inverse_matrix
+            camera_sun_pair.surface_point_z >> gcn.suns.camera_surface_point_z
 
-            self.node = gc
+            self.node = gcn
         else:
             self.node = PyNode('global_controls')
     

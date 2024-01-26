@@ -6,6 +6,7 @@ from internals.screen_placement import ScreenPlacement
 from internals.tracking_projection import TrackingProjection
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
+from internals.global_controls import gcn
 import json, re
 
 noise_scale = 1000
@@ -174,7 +175,11 @@ class CollageShader(Network):
 
         last_texture = None
 
-        luminance = self.utility('plusMinusAverage', 'luminance')
+        lightness = self.add(0, 0, 'lightness', return_node=True)
+        addAttr(obj_shape, ln='lightness', at='message')
+        lightness.message >> obj_shape.lightness
+        gcn.default_value >> lightness.floatA
+        
 
         shader_color = None
         for facet_index in range(num_facets):

@@ -1,8 +1,8 @@
 from pymel.core import *
 from internals.network import Network
 
-from internals.control_groups import control_groups
-from internals.invisible import make_invisible_in_render
+from internals.global_groups import control_groups
+from internals.invisible import set_visibility_in_render
 
 
 class SunPairShaders(Network):
@@ -94,8 +94,8 @@ class SunPair(Network):
                 sets(shaders.sun_sg, e=True, fe=sun_shape)
                 sets(shaders.antisun_sg, e=True, fe=antisun_shape)
 
-                make_invisible_in_render(sun_shape)
-                make_invisible_in_render(antisun_shape)
+                set_visibility_in_render(sun_shape, False)
+                set_visibility_in_render(antisun_shape, False)
 
                 parent(sun_trans, sun_group)
                 parent(antisun_trans, sun_group)

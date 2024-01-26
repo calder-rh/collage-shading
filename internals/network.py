@@ -65,13 +65,16 @@ def shading_node_makers(prefix, node_set, delete_setting):
     node_makers['blank'] = blank
 
     def generic_float_math_node_maker(operation):
-        def float_math_node_maker(input1, input2, node_name):
+        def float_math_node_maker(input1, input2, node_name, return_node=False):
             name = prefix + node_name
             if objExists(name):
                 if delete_setting:
                     delete(name)
                 else:
-                    return PyNode(name).outFloat
+                    if return_node:
+                        return PyNode(name)
+                    else:
+                        return PyNode(name).outFloat
 
             node = shadingNode('floatMath', asUtility=True, name=name)
             node.operation.set(operation)
@@ -91,7 +94,10 @@ def shading_node_makers(prefix, node_set, delete_setting):
                 node.floatB.set(input2)
             
             node_set.add(node)
-            return node.outFloat
+            if return_node:
+                return node
+            else:
+                return node.outFloat
         return float_math_node_maker
     
     node_makers['add'] = generic_float_math_node_maker(0)
@@ -112,7 +118,7 @@ def shading_node_makers(prefix, node_set, delete_setting):
     
     node_makers['poly'] = poly_node_maker
 
-    def universal_node_maker(function, node_name, **kwargs):
+    def universal_node_maker(function, node_name, *args, **kwargs):
         name = prefix + node_name
         if objExists(name):
             if delete_setting:
@@ -120,7 +126,7 @@ def shading_node_makers(prefix, node_set, delete_setting):
             else:
                 return PyNode(name)
         
-        return function(name=name, **kwargs)
+        return function(*args, name=name, **kwargs)
     
     node_makers['make'] = universal_node_maker
 
@@ -128,7 +134,7 @@ def shading_node_makers(prefix, node_set, delete_setting):
 
 
 class Network:
-    reserved_keys = ['utility', 'texture', 'shader', 'expression', 'blank', 'add', 'subtract', 'multiply', 'divide', 'poly', 'make', 'nodes', 'subnetworks', 'node_keys', '__dict__', 'add_keys']
+    reserved_keys = ['context', 'utility', 'texture', 'shader', 'expression', 'blank', 'add', 'subtract', 'multiply', 'divide', 'poly', 'make', 'nodes', 'subnetworks', 'node_keys', '__dict__', 'add_keys']
     all_abbreviations = {}
     
     def __init_subclass__(cls, **kwargs) -> None:
@@ -181,6 +187,7 @@ class Network:
             result.__dict__ |= shading_node_makers(prefix, result.nodes, cls.delete != False)
             result.add_keys = True
             result.prefix = prefix
+            result.context = context
             result._original_init(context, *args, **kwargs)
             cls.created_networks[context_tuple] = result
             return result

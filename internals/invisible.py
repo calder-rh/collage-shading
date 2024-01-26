@@ -1,9 +1,9 @@
-def make_invisible_in_render(shape):
-    shape.primaryVisibility.set(0)
-    shape.castsShadows.set(0)
-    shape.aiVisibleInDiffuseReflection.set(0)
-    shape.aiVisibleInSpecularReflection.set(0)
-    shape.aiVisibleInDiffuseTransmission.set(0)
-    shape.aiVisibleInSpecularTransmission.set(0)
-    shape.aiVisibleInVolume.set(0)
-    shape.aiSelfShadows.set(0)
+def set_visibility_in_render(shape, value):
+    shape.primaryVisibility.set(value)
+    shape.castsShadows.set(value)
+    shape.aiVisibleInDiffuseReflection.set(value)
+    shape.aiVisibleInSpecularReflection.set(value)
+    shape.aiVisibleInDiffuseTransmission.set(value)
+    shape.aiVisibleInSpecularTransmission.set(value)
+    shape.aiVisibleInVolume.set(value)
+    shape.aiSelfShadows.set(value)
