@@ -179,7 +179,6 @@ class CollageShader(Network):
         addAttr(obj_shape, ln='lightness', at='message')
         lightness.message >> obj_shape.lightness
         gcn.default_value >> lightness.floatA
-        
 
         shader_color = None
         for facet_index in range(num_facets):
