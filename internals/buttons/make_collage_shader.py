@@ -1,7 +1,7 @@
 from pymel.core import *
 
 import importlib
-from internals import network, shading_path, global_controls, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, make_collage_shader, unique_name
+from internals import network, shading_path, global_controls, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, unique_name
 importlib.reload(network)
 importlib.reload(shading_path)
 importlib.reload(global_controls)
@@ -13,7 +13,6 @@ importlib.reload(world_placement)
 importlib.reload(screen_placement)
 importlib.reload(tracking_projection)
 importlib.reload(dialog_with_support)
-importlib.reload(make_collage_shader)
 importlib.reload(unique_name)
 
 from internals.dialog_with_support import dialog_with_support

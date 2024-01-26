@@ -1,7 +1,6 @@
 from pymel.core import *
 from internals.network import Network
 
-from internals.global_groups import control_groups
 from internals.invisible import set_visibility_in_render
 from internals.sun_pair import SunPair, SunPairShaders
 

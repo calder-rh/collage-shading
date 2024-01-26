@@ -188,7 +188,11 @@ class Network:
             result.add_keys = True
             result.prefix = prefix
             result.context = context
+
+            selection = ls(sl=True)
             result._original_init(context, *args, **kwargs)
+            select(selection)
+
             cls.created_networks[context_tuple] = result
             return result
 
