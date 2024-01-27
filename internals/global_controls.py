@@ -3,7 +3,7 @@ from internals.network import Network
 
 from internals.invisible import set_visibility_in_render
 from internals.sun_pair import SunPair, SunPairShaders
-
+from internals.global_groups import control_groups
 
 
 class GlobalControls(Network):
@@ -100,6 +100,7 @@ class GlobalControls(Network):
 
             light_sun_pair = SunPair({'usage': 'light'}, light_direction_trans.r, gcn.sun_distance, make_objects=True)
             camera_rotation_calculator = self.utility('decomposeMatrix', 'camera_rotation_calculator')
+            gcn.camera.world_matrix >> camera_rotation_calculator.inputMatrix
             camera_sun_pair = SunPair({'usage': 'camera'}, camera_rotation_calculator.outputRotate, gcn.sun_distance)
 
             light_sun_pair.sun_position >> gcn.suns.light_sun_position

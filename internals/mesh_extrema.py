@@ -1,8 +1,6 @@
 from pymel.core import *
 from internals.network import Network
 
-from internals.global_controls import gcn
-
 
 class MeshExtrema(Network):
     relevant_context = ['mesh', 'sun_pair']
@@ -36,21 +34,21 @@ class MeshExtrema(Network):
 
 
 class MeasuredGradient(Network):
-    relevant_context = ['obj']
+    relevant_context = ['obj', 'sun_pair']
     delete = True
 
-    def __init__(self, meshes):
+    def __init__(self, _, meshes, sun_position, antisun_position, direction_inverse_matrix, surface_point_z):
         dark_z_calculator = self.utility('min', 'dark_z_calculator')
         light_z_calculator = self.utility('max', 'light_z_calculator')
 
         for i, mesh in enumerate(meshes):
             trans = mesh.getTransform()
-            this_mesh_extrema = self.build(MeshExtrema({'mesh': trans.name(), 'sun_pair': 'camera'}, trans, gcn.camera_sun_position, gcn.camera_antisun_position, gcn.camera_direction_inverse_matrix), add_keys=False)
+            this_mesh_extrema = self.build(MeshExtrema({'mesh': trans.name(), 'sun_pair': 'camera'}, trans, sun_position, antisun_position, direction_inverse_matrix), add_keys=False)
             this_mesh_extrema.light_z >> light_z_calculator.input[i]
             this_mesh_extrema.dark_z >> dark_z_calculator.input[i]
         
         gradient_calculator = self.utility('remapValue', 'gradient_calculator')
         dark_z_calculator.output >> gradient_calculator.inputMin
         light_z_calculator.output >> gradient_calculator.inputMax
-        gcn.camera_surface_point_z >> gradient_calculator.inputValue
+        surface_point_z >> gradient_calculator.inputValue
         self.gradient_value = gradient_calculator.outValue

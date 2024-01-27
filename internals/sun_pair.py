@@ -127,12 +127,12 @@ class SunPair(Network):
             antisun_distance >> antisun_matrix.inputTranslateZ
 
             sun_position_calculator = self.utility('multMatrix', 'sun_position_calculator')
-            rotation_matrix.outputMatrix >> sun_position_calculator.matrixIn[0]
-            sun_matrix.outputMatrix >> sun_position_calculator.matrixIn[1]
+            rotation_matrix.outputMatrix >> sun_position_calculator.matrixIn[1]
+            sun_matrix.outputMatrix >> sun_position_calculator.matrixIn[0]
 
             antisun_position_calculator = self.utility('multMatrix', 'antisun_position_calculator')
-            rotation_matrix.outputMatrix >> antisun_position_calculator.matrixIn[0]
-            antisun_matrix.outputMatrix >> antisun_position_calculator.matrixIn[1]
+            rotation_matrix.outputMatrix >> antisun_position_calculator.matrixIn[1]
+            antisun_matrix.outputMatrix >> antisun_position_calculator.matrixIn[0]
 
             sun_decomposer = self.utility('decomposeMatrix', 'sun_decomposer')
             antisun_decomposer = self.utility('decomposeMatrix', 'antisun_decomposer')

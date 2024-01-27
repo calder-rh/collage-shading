@@ -3,6 +3,7 @@ from internals.network import Network
 
 
 class Luminance(Network):
+    relevant_context = []
     delete = False
 
     def __init__(self, _):

@@ -7,6 +7,7 @@ trace_set_name = 'distance_from_influence'
 
 
 class ShadowDistance(Network):
+    relevant_context = []
     delete = False
 
     def __init__(self, _):
@@ -17,7 +18,7 @@ class ShadowDistance(Network):
         distance_remap.outputMin.set(-1)
         distance_remap.outputMax.set(0)
         distance_node.outColorR >> distance_remap.inputValue
-        self.shadow = distance_remap.outValue
+        self.shadow_distance = distance_remap.outValue
 
 shadow_distance_node = ShadowDistance({})
 

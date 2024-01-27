@@ -27,12 +27,12 @@ class LightingSets(Network):
     delete = False
 
     def __init__(self, _):
-        self.global_set = sets(name='lighting_sets', em=True)
+        self.global_set = self.make(sets, 'lighting_sets', em=True)
 
-        self.mesh_groups = sets(name='mesh_groups')
-        self.default_lights = sets(name='default_lights')
-        self.added_lights_sets = sets(name='added_lights_sets')
-        self.excluded_lights_sets = sets(name='excluded_lights_sets')
+        self.mesh_groups = self.make(sets, 'mesh_groups', em=True)
+        self.default_lights = self.make(sets, 'default_lights', em=True)
+        self.added_lights_sets = self.make(sets, 'added_lights_sets', em=True)
+        self.excluded_lights_sets = self.make(sets, 'excluded_lights_sets', em=True)
 
         sets(self.global_set, add=self.mesh_groups)
         sets(self.global_set, add=self.default_lights)

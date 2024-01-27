@@ -6,5 +6,5 @@ code_path = str(Path(workspace(q=True, rd=True)) / 'shading' / 'fantasy' / 'code
 if code_path not in sys.path:
     sys.path.append(code_path)
 
-from internals.buttons import make_palette_settings
-make_palette_settings.run()
+from internals.buttons import make_illuminee
+make_illuminee.run()

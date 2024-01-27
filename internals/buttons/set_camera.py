@@ -26,3 +26,4 @@ def run():
     else:
         confirmDialog(t='Error', m='Please select only one camera.', b='OK', cb='OK', db='OK', icon='warning', ma='left')
         exit()
+        

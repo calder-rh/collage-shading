@@ -175,10 +175,12 @@ class CollageShader(Network):
 
         last_texture = None
 
+
         lightness = self.add(0, 0, 'lightness', return_node=True)
-        addAttr(obj_shape, ln='lightness', at='message')
+        if not obj_shape.hasAttr('lightness'):
+            addAttr(obj_shape, ln='lightness', at='message')
         lightness.message >> obj_shape.lightness
-        gcn.default_value >> lightness.floatA
+        gcn.default_lightness >> lightness.floatA
 
         shader_color = None
         for facet_index in range(num_facets):
@@ -191,7 +193,7 @@ class CollageShader(Network):
             if not multiple_facets:
                 masks_path = None
                 resolution = None
-            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, luminance.output1D, facet_index, facet_settings, facet_center, self.orienter_group_name, orienter_transform_path), add_keys=False)
+            facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, lightness.outFloat, facet_index, facet_settings, facet_center, self.orienter_group_name, orienter_transform_path), add_keys=False)
             
             if not multiple_facets:
                 shader_color = facet_shader.color
