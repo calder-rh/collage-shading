@@ -7,13 +7,13 @@ if code_path not in sys.path:
     sys.path.append(code_path)
 
 import importlib
-from internals import global_groups, network, sun_pair, global_controls, illuminee
+from internals import network, sun_pair, global_groups, global_controls, ground
 importlib.reload(network)
 importlib.reload(global_groups)
 importlib.reload(sun_pair)
 importlib.reload(global_controls)
-importlib.reload(illuminee)
+importlib.reload(ground)
 
-from internals.illuminee import Illuminee
-i = Illuminee({})
-select(i.control_node, ne=True)
+from internals import ground
+xyz = ground.sy_to_uv(0.5, 0)
+SCENE.marker.t.set(xyz)

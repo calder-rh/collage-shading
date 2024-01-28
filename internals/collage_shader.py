@@ -1,7 +1,7 @@
 from pymel.core import *
 from internals.network import Network
 from internals import palettes
-from internals.world_placement import RigidWorldPlacement
+from internals.world_placement import WorldPlacement
 from internals.screen_placement import ScreenPlacement
 from internals.tracking_projection import TrackingProjection
 from internals.dialog_with_support import dialog_with_support
@@ -43,7 +43,7 @@ class FacetShader(Network):
         if orienter_settings is None:
             if obj_up_settings is None:
                 obj_up_settings = (0, 1, 0)
-            world_placement = self.build(RigidWorldPlacement(context, obj, facet_center, obj_up_settings))
+            world_placement = self.build(WorldPlacement(context, obj, facet_center, obj_up_settings))
 
         else:
             if obj_up_settings is None:
@@ -76,7 +76,7 @@ class FacetShader(Network):
 
             parent(locator_transform, orienter_group)
 
-            world_placement = self.build(RigidWorldPlacement(context, locator_transform, (0, 0, 0), obj_up_settings))
+            world_placement = self.build(WorldPlacement(context, locator_transform, (0, 0, 0), obj_up_settings))
 
         if (facet_up := facet_settings['image up']) is not None:
             image_up = facet_up

@@ -40,6 +40,7 @@ class Illuminee(Network):
             addAttr(self.control_node, ln='gradient_weight', min=0, smx=1, dv=1)
             addAttr(self.control_node, ln='lights_weight', min=0, smx=1, dv=1)
             addAttr(self.control_node, ln='shadow_influences_weight', min=0, smx=1, dv=1)
+            addAttr(self.control_node, ln='adjustment', min=-1, max=1, dv=0)
 
             addAttr(self.control_node, ln='front_value_range', at='compound', nc=2)
             addAttr(self.control_node, p='front_value_range', ln='front_min', min=0, max=1, dv=0)
@@ -108,6 +109,7 @@ class Illuminee(Network):
         gcn.gradients_weight >> self.control_node.gradient_weight
         gcn.lights_weight >> self.control_node.lights_weight
         gcn.shadow_influences_weight >> self.control_node.shadow_influences_weight
+        gcn.adjustment >> self.control_node.adjustment
         gcn.front_min >> self.control_node.front_value_range.front_min
         gcn.front_max >> self.control_node.front_value_range.front_max
         gcn.back_min >> self.control_node.back_value_range.back_min

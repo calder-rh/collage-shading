@@ -44,6 +44,7 @@ class GlobalControls(Network):
             addAttr(gcn, ln='gradients_weight', min=0, smx=1, dv=1)
             addAttr(gcn, ln='lights_weight', min=0, smx=1, dv=1)
             addAttr(gcn, ln='shadow_influences_weight', min=0, smx=1, dv=0.5)
+            addAttr(gcn, ln='adjustment', min=-1, max=1, dv=0)
 
             addAttr(gcn, ln='shadow_influences_distance', min=0, smx=1, dv=1)
 
@@ -56,6 +57,8 @@ class GlobalControls(Network):
             addAttr(gcn, p='back_value_range', ln='back_max', min=0, max=1, dv=0.7)
 
             addAttr(gcn, ln='default_lightness', min=0, max=1, dv=0.5)
+
+            addAttr(gcn, ln='ground_y', smn=-10, smx=10, dv=0, k=True)
 
             addAttr(gcn, ln='sun_distance', min=0, smx=1000, dv=100)
             
@@ -97,6 +100,8 @@ class GlobalControls(Network):
             addAttr(gcn, ln='camera_antisun_position_z', at='float', p='camera_antisun_position')
             addAttr(gcn, ln='camera_direction_inverse_matrix', at='matrix', p='suns')
             addAttr(gcn, ln='camera_surface_point_z', p='suns')
+
+            addAttr(gcn, p='ground', ln='ground_mesh', dt='mesh')
 
             light_sun_pair = SunPair({'usage': 'light'}, light_direction_trans.r, gcn.sun_distance, make_objects=True)
             camera_rotation_calculator = self.utility('decomposeMatrix', 'camera_rotation_calculator')

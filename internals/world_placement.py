@@ -2,7 +2,7 @@ from pymel.core import *
 from internals.network import Network
 
 
-class RigidWorldPlacement(Network):
+class WorldPlacement(Network):
     relevant_context = ['mesh', 'facet']
 
     def __init__(self, context, obj, center_os, orienter_os):
@@ -22,7 +22,3 @@ class RigidWorldPlacement(Network):
         obj_matrix >> rotation_ws_calculator.inMatrix
         rotation_ws_calculator.inPoint.set(orienter_os)
         self.rotation_ws = rotation_ws_calculator.output
-
-        trans = obj.getTransform()
-        bounding_box = trans.boundingBox()
-        self.obj_size = (bounding_box.h ** 2 + bounding_box.w ** 2 + bounding_box.d ** 2) ** 0.5
