@@ -1,6 +1,7 @@
 from pymel.core import *
 
 from internals.network import Network
+from internals.coordinate_converter import CoordinateConverter
 from internals.global_controls import gcn
 import math
 
@@ -16,10 +17,12 @@ class GroundUVConverter(Network):
         self.u_out = result.parameterU
         self.v_out = result.parameterV
 
+guc = GroundUVConverter({})
+
 
 millimeters_per_inch = 25.4
 
-def sy_to_uv(y_interp, time):
+def sy_to_xyz(y_interp, time):
     camera_trans = listConnections(gcn.camera_message, s=True, d=False)[0]
     camera_shape = camera_trans.getShape()
 
