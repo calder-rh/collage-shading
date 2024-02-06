@@ -2,7 +2,7 @@ from pymel.core import *
 from internals.network import Network
 
 from internals.invisible import set_visibility_in_render
-from internals.sun_pair import SunPair, SunPairShaders
+from internals.sun_pair import SunPairShaders, SunPair
 from internals.global_groups import control_groups
 
 
@@ -101,7 +101,7 @@ class GlobalControls(Network):
             addAttr(gcn, ln='camera_direction_inverse_matrix', at='matrix', p='suns')
             addAttr(gcn, ln='camera_surface_point_z', p='suns')
 
-            addAttr(gcn, p='ground', ln='ground_mesh', dt='mesh')
+            addAttr(gcn, ln='ground_mesh', dt='mesh')
 
             light_sun_pair = SunPair({'usage': 'light'}, light_direction_trans.r, gcn.sun_distance, make_objects=True)
             camera_rotation_calculator = self.utility('decomposeMatrix', 'camera_rotation_calculator')

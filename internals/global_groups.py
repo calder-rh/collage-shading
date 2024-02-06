@@ -46,3 +46,4 @@ class LightingSets(Network):
         sets(self.default_lights, remove=light)
 
 lighting_sets = LightingSets({})
+        

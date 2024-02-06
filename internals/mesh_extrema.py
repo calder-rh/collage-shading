@@ -37,13 +37,13 @@ class MeasuredGradient(Network):
     relevant_context = ['obj', 'sun_pair']
     delete = True
 
-    def __init__(self, _, meshes, sun_position, antisun_position, direction_inverse_matrix, surface_point_z):
+    def __init__(self, context, meshes, sun_position, antisun_position, direction_inverse_matrix, surface_point_z):
         dark_z_calculator = self.utility('min', 'dark_z_calculator')
         light_z_calculator = self.utility('max', 'light_z_calculator')
 
         for i, mesh in enumerate(meshes):
             trans = mesh.getTransform()
-            this_mesh_extrema = self.build(MeshExtrema({'mesh': trans.name(), 'sun_pair': 'camera'}, trans, sun_position, antisun_position, direction_inverse_matrix), add_keys=False)
+            this_mesh_extrema = self.build(MeshExtrema({'mesh': trans.name(), 'sun_pair': context['sun_pair']}, trans, sun_position, antisun_position, direction_inverse_matrix), add_keys=False)
             this_mesh_extrema.light_z >> light_z_calculator.input[i]
             this_mesh_extrema.dark_z >> dark_z_calculator.input[i]
         

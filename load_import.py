@@ -7,7 +7,7 @@ code_path = str(Path(workspace(q=True, rd=True)) / 'shading' / 'fantasy' / 'code
 if code_path not in sys.path:
     sys.path.append(code_path)
 
-from internals.buttons import make_uv_file
-reload(make_uv_file)
-from internals.buttons import make_uv_file
-make_uv_file.run()
+from internals.buttons import load_import
+reload(load_import)
+from internals.buttons import load_import
+load_import.run()
