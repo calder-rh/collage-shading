@@ -13,7 +13,6 @@ importlib.reload(illuminee)
 importlib.reload(reload)
 
 from illuminee import Illuminee
-from global_groups import lighting_sets
 from internals import reload
 
 
@@ -25,9 +24,15 @@ def run():
     selected_illuminees = [Illuminee(item) for item in selection if item.hasAttr('used_as_illuminee')]
 
     if selected_illuminees:
-        for illuminee in selected_illuminees:
-            illuminee.add_light(selected_lights)
+        illuminees = selected_illuminees
     else:
-        sets(lighting_sets.default_lights, add=selected_lights)
-    
+        illuminees = set(sets(ls('::illuminees', sets=True), union=True))
+
+    if selected_lights:
+        for illuminee in illuminees:
+            illuminee.reset_light(selected_lights)
+    else:
+        for illuminee in illuminees:
+            illuminee.reset_lights()
+
     reload.reload()

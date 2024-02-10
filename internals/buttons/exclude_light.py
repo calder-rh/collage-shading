@@ -26,8 +26,8 @@ def run():
 
     if selected_illuminees:
         for illuminee in selected_illuminees:
-            illuminee.add_light(selected_lights)
+            illuminee.exclude_light(selected_lights)
     else:
-        sets(lighting_sets.default_lights, add=selected_lights)
+        sets(lighting_sets.default_lights, remove=selected_lights)
     
     reload.reload()

@@ -9,9 +9,6 @@ from internals.unique_name import format_unique_name
 from internals.global_controls import gcn
 import json, re
 
-noise_scale = 1000
-noise_adjustment = 0.1
-
 
 def error(title, message):
     dialog_with_support(title, message, ['I’ll fix it'], cb='I’ll fix it', db='I’ll fix it', icon='warning')
@@ -21,7 +18,7 @@ def error(title, message):
 class FacetShader(Network):
     relevant_context = ['mesh', 'facet']
     
-    def __init__(self, context, masks_path, resolution, obj, luminance, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
+    def __init__(self, context, masks_path, resolution, obj, lightness, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
         multiple_facets = masks_path is not None
 
         orienter_transforms = None
@@ -86,7 +83,7 @@ class FacetShader(Network):
 
         shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
         setAttr(f'{shade_ramp.name()}.type', 0)
-        luminance >> shade_ramp.input
+        lightness >> shade_ramp.input
 
         for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):
             start_index = 2 * shade_index
@@ -173,14 +170,19 @@ class CollageShader(Network):
             facet_centers = surface_values['facet centers']
             resolution = len(surface_values['blur values'])
 
-        last_texture = None
 
 
         if not obj_shape.hasAttr('lightness'):
             addAttr(obj_shape, ln='lightness')
         gcn.default_lightness >> obj_shape.lightness
 
-        shader_color = None
+        if not obj_shape.hasAttr('saturation'):
+            addAttr(obj_shape, ln='saturation')
+        obj_shape.saturation.set(1)
+
+
+        last_texture = None
+        raw_color = None
         for facet_index in range(num_facets):
             facet_settings = all_facet_settings[facet_index]
             if multiple_facets:
@@ -194,7 +196,7 @@ class CollageShader(Network):
             facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, obj_shape.lightness, facet_index, facet_settings, facet_center, self.orienter_group_name, orienter_transform_path), add_keys=False)
             
             if not multiple_facets:
-                shader_color = facet_shader.color
+                raw_color = facet_shader.color
                 break
 
             if facet_index == 0:
@@ -208,14 +210,69 @@ class CollageShader(Network):
             if facet_index >= 1:
                 facet_shader.color >> last_texture.input2
         
-        if not shader_color:
+        if not raw_color:
             if num_facets == 2:
-                shader_color = last_texture.outColor
+                raw_color = last_texture.outColor
             else:
-                shader_color = new_texture.outColor
+                raw_color = new_texture.outColor
+    
+        # Desaturate the back
+
+        desaturator = self.utility('remapHsv', 'desaturator')
+        raw_color >> desaturator.color
+        obj_shape.saturation >> desaturator.saturation[1].saturation_FloatValue
+
+        # Atmospheric perspective:
+    
+        object_hsv = self.utility('rgbToHsv', 'object_hsv')
+        desaturator.outColor >> object_hsv.inRgb
+
+        atmosphere_hsv = self.utility('rgbToHsv', 'atmosphere_hsv')
+        gcn.color >> atmosphere_hsv.inRgb
+
+        atmosphere_blend = self.utility('blendColors', 'atmosphere_blend')
+        gcn.color >> atmosphere_blend.color1
+        desaturator.outColor >> atmosphere_blend.color2
+        gcn.atmospheric_perspective_amount >> atmosphere_blend.blender
+        blend_hsv = self.utility('rgbToHsv', 'blend_hsv')
+        atmosphere_blend.output >> blend_hsv.inRgb
+
+        color_builder = self.utility('hsvToRgb', 'color_builder')
+
+        # Hue
+
+        blend_hsv.outHsvH >> color_builder.inHsvR
+
+        # Saturation
+
+        saturation_lerp = self.utility('remapValue', 'saturation_lerp')
+        gcn.atmospheric_perspective_amount >> saturation_lerp.inputValue
+        object_hsv.outHsvS >> saturation_lerp.outputMin
+        atmosphere_hsv.outHsvS >> saturation_lerp.outputMax
+
+        blend_s_over_lerp_s = self.divide(blend_hsv.outHsvS, saturation_lerp.outValue, 'blend_s_over_lerp_s')
+        flip_1 = self.subtract(1, blend_s_over_lerp_s, 'flip_1')
+        power = self.power(flip_1, 3, 'power')
+        flip_2 = self.subtract(1, power, 'flip_2')
+        adjusted_saturation = self.multiply(flip_2, saturation_lerp.outValue, 'adjusted_saturation')
+        adjusted_saturation >> color_builder.inHsvG
+
+        # Value
+
+        final_min_value = self.multiply(atmosphere_hsv.outHsvV, 0.2, 'final_value_min')
+        min_value = self.multiply(gcn.atmospheric_perspective_amount, final_min_value, 'min_value')
+        max_value = self.utility('remapValue', 'max_value')
+        max_value.outputMin.set(1)
+        atmosphere_hsv.outHsvV >> max_value.outputMax
+        gcn.atmospheric_perspective_amount >> max_value.inputValue
+        adjusted_value = self.utility('remapValue', 'adjusted_value')
+        min_value >> adjusted_value.outputMin
+        max_value.outValue >> adjusted_value.outputMax
+        object_hsv.outHsvV >> adjusted_value.inputValue
+        adjusted_value.outValue >> color_builder.inHsvB
         
         shader = self.shader('surfaceShader', 'collage_shader')
-        shader_color >> shader.outColor
+        color_builder.outRgb >> shader.outColor
 
         sg = self.utility('shadingEngine', 'collage_shader_SG')
         shader.outColor >> sg.surfaceShader

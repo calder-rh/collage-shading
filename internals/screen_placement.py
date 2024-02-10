@@ -3,30 +3,10 @@ from internals.network import Network
 from internals.global_controls import gcn
 
 
-class FocalLengthFactor(Network):
-    relevant_context = []
-    prefix = None
-
-    def __init__(self, _):
-        millimeters_per_inch = 25.4
-        attrs = ['focal_length',
-                 'horizontal_aperture',
-                 'focal_length_factor']
-        expr = f'focal_length_factor = focal_length / (horizontal_aperture * {millimeters_per_inch});'
-        node = self.expression('focal_length_factor', attrs, expr)
-        
-        gcn.camera.horizontal_aperture >> node.horizontal_aperture
-        gcn.camera.focal_length >> node.focal_length        
-
-        self.focal_length_factor = node.focal_length_factor
-
-
 class ScreenPlacement(Network):
     relevant_context = ['mesh', 'facet']
     
     def __init__(self, context, world_placement, image_up):
-        flf = self.build(FocalLengthFactor({}))
-
         # Find the location of the object in the space of the camera
         obj_center_cs = self.utility('pointMatrixMult', 'obj_center_cs')
         gcn.camera.inverse_world_matrix >> obj_center_cs.inMatrix
@@ -51,6 +31,7 @@ class ScreenPlacement(Network):
                  'orienter_cs_x',
                  'orienter_cs_y',
                  'orienter_cs_z',
+                 'global_scale',
                  'focal_length_factor',
                  'image_up',
                  'position_x',
@@ -69,7 +50,7 @@ float $facet_center_ss_x = focal_length_factor * facet_center_cs_x / $facet_cent
 float $facet_center_ss_y = focal_length_factor * facet_center_cs_y / $facet_center_cs_z;
 vector $facet_center_ss = <<$facet_center_ss_x, $facet_center_ss_y>>;
 
-float $scale_ss = 10 / $facet_center_cs_z;
+float $scale_ss = global_scale / $facet_center_cs_z;
 
 float $orienter_cs_z = -orienter_cs_z;
 float $orienter_ss_x = focal_length_factor * orienter_cs_x / $orienter_cs_z;
@@ -90,10 +71,11 @@ scale = $scale_ss;
         facet_center_cs.outputX >> node.facet_center_cs_x
         facet_center_cs.outputY >> node.facet_center_cs_y
         facet_center_cs.outputZ >> node.facet_center_cs_z
+        gcn.texture_scale >> node.global_scale
         orienter_cs.outputX >> node.orienter_cs_x
         orienter_cs.outputY >> node.orienter_cs_y
         orienter_cs.outputZ >> node.orienter_cs_z
-        flf.focal_length_factor >> node.focal_length_factor
+        gcn.camera.focal_length_factor >> node.focal_length_factor
         node.image_up.set(image_up)
 
         self.position_x = node.position_x

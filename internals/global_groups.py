@@ -12,11 +12,9 @@ class ControlGroups(Network):
 
         self.internals = self.make(group, 'internals', em=True)
         self.sun_pairs = self.make(group, 'sun_pairs', em=True)
-        self.illuminees = self.make(group, 'illuminees', em=True)
 
         parent(self.internals, self.controls)
         parent(self.sun_pairs, self.internals)
-        parent(self.illuminees, self.internals)
 
 control_groups = ControlGroups({})
 
@@ -29,12 +27,12 @@ class LightingSets(Network):
     def __init__(self, _):
         self.global_set = self.make(sets, 'lighting_sets', em=True)
 
-        self.mesh_groups = self.make(sets, 'mesh_groups', em=True)
+        self.illuminees = self.make(sets, 'illuminees', em=True)
         self.default_lights = self.make(sets, 'default_lights', em=True)
         self.added_lights_sets = self.make(sets, 'added_lights_sets', em=True)
         self.excluded_lights_sets = self.make(sets, 'excluded_lights_sets', em=True)
 
-        sets(self.global_set, add=self.mesh_groups)
+        sets(self.global_set, add=self.illuminees)
         sets(self.global_set, add=self.default_lights)
         sets(self.global_set, add=self.added_lights_sets)
         sets(self.global_set, add=self.excluded_lights_sets)
@@ -46,4 +44,3 @@ class LightingSets(Network):
         sets(self.default_lights, remove=light)
 
 lighting_sets = LightingSets({})
-        
