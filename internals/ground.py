@@ -4,27 +4,97 @@ from internals.network import Network
 from internals.global_controls import gcn
 from internals.utilities import connect_texture_placement
 from internals.illuminee import Illuminee
+from internals.screen_placement import AnimatedScreenPlacement
+from internals.tracking_projection import TrackingProjection
+from internals.palettes import FacetImage
 from random import random
 import math
 
 
-
 class GroundSlice(Network):
-    relevant_context = ['index']
+    relevant_context = ['mesh', 'index']
     delete = ...
 
-    def __init__(self, _, ground, index):
-        self.texture_placement = self.utility('place2dTexture', 'texture_placement')
-        self.image_texture = self.texture('file', 'image_texture', isColorManaged=True)
-        self.projection = self.utility('projection', 'projection')
+    def __init__(self, context, ground, index, image_path):
+        self.ground = ground
+        self.index = index
 
-        connect_texture_placement(self.texture_placement, self.image_texture)
+        self.screen_placement = AnimatedScreenPlacement({'mesh': context['mesh'], 'index': str(self.index)})
+        image = FacetImage(image_path, random(), random(), 1)
+        tracking_projection = TrackingProjection({'mesh': context['mesh'], 'facet': str(self.index), 'image': 'ground'}, self.screen_placement, image, False)
+        self.color = tracking_projection.color
 
-        self.projection.projType.set(8)
-        gcn.camera.camera_message >> self.projection.linkedCamera
-        self.image_texture.outColor >> self.projection.image
 
-        ...
+    def z_gs(self, frame):
+        return gcn.slice_offset.get(t=frame) + gcn.slice_spacing.get() * (self.index + 0.5)
+
+    def x_ss_to_ground_xyz_ws(self, x_ss, frame):
+        z_gs = self.z_gs(frame)
+        x_gs = z_gs * x_ss / gcn.focal_length_factor.get(t=frame)
+        z_unit = self.ground.camera_ground_vector.get(t=frame)
+        x_unit = (-z_unit[2], 0, z_unit[0])
+        return tuple(z_gs * zuc + x_gs * xuc for zuc, xuc in zip(z_unit, x_unit))
+    
+
+    def ground_xyz_ws_to_uv(self, xyz_ws, frame):
+        self.ground.xyz_ws_to_uv.set(xyz_ws)
+        return self.ground.u_from_xyz_ws, self.ground.v_from_xyz_ws
+    
+
+    def uv_to_xyz_ws(self, uv, frame):
+        u, v = uv
+        self.ground.u_to_xyz_ws.set(u)
+        self.ground.v_to_xyz_ws.set(v)
+        return self.ground.xyz_ws_from_uv.get(t=frame)
+    
+
+    def xyz_ws_to_xy_ss(self, xyz, frame):
+        self.ground.xyz_ws_to_xyz_cs.set(xyz)
+        x_cs, y_cs, z_cs = self.ground.xyz_cs_from_xyz_ws.get()
+        x_ss = x_cs * gcn.focal_length_factor.get(t=frame) / (-z_cs)
+        y_ss = y_cs * gcn.focal_length_factor.get(t=frame) / (-z_cs)
+        return x_ss, y_ss
+    
+
+    def animate(self):
+        playback_min = int(playbackOptions(min=True, q=True))
+        playback_max = int(playbackOptions(max=True, q=True))
+
+        def calculate_scale(frame):
+            return gcn.global_scale.get(t=frame) / self.z_gs(frame)
+    
+        self.screen_placement.set_key(playback_min, 0, 0, 0, calculate_scale(playback_min))
+        
+        last_x_ss = 0
+        last_y_ss = 0
+        x_ss_samples = [i / 10 for i in range(1, 11, 2)]
+        for frame in range(playback_min + 1, playback_max + 1):
+            Δxy_ss_list = []
+
+            for sample in x_ss_samples:
+                ground_xyz = self.x_ss_to_ground_xyz_ws(sample, frame)
+                ground_x, _, ground_z = ground_xyz
+                uv = self.ground_xyz_ws_to_uv(ground_xyz, frame)
+                
+                prev_xyz_ws = self.uv_to_xyz_ws(uv, frame - 1)
+                current_xyz_ws = self.uv_to_xyz_ws(uv, frame)
+                if any((x - ground_x) ** 2 + (z - ground_z) ** 2 > 0.1 for x, _, z in (prev_xyz_ws, current_xyz_ws)):
+                    continue
+                
+                prev_xy_ss = self.xyz_ws_to_xy_ss(prev_xyz_ws, frame - 1)
+                current_xy_ss = self.xyz_ws_to_xy_ss(current_xyz_ws, frame)
+                Δxy_ss = (current_xy_ss[0] - prev_xy_ss[0], current_xy_ss[1] - prev_xy_ss[1])
+                Δxy_ss_list.append(Δxy_ss)
+            
+            num_samples = len(Δxy_ss_list)
+            if num_samples:
+                avg_Δxy_ss = tuple(sum(Δxy_ss[ci] for Δxy_ss in Δxy_ss_list) / num_samples for ci in range(2))
+            else:
+                avg_Δxy_ss = (0, 0)
+
+            x_ss = last_x_ss + avg_Δxy_ss[0]
+            y_ss = last_y_ss + avg_Δxy_ss[1]
+            self.screen_placement.set_key(frame, x_ss, y_ss, 0, calculate_scale(frame))
 
 
 
@@ -49,19 +119,23 @@ class Ground(Network):
         
         closest_point_to_flattened_ground = self.utility('closestPointOnMesh', 'closest_point_to_flattened_ground')
         flattener.outputGeometry >> closest_point_to_flattened_ground.inMesh
-        closest_point_to_flattened_ground.inPositionY.set(0)
 
-        self.in_x = closest_point_to_flattened_ground.inPositionX
-        self.in_z = closest_point_to_flattened_ground.inPositionZ
-        self.out_u = closest_point_to_flattened_ground.parameterU
-        self.out_v = closest_point_to_flattened_ground.parameterV
+        self.xyz_ws_to_uv = closest_point_to_flattened_ground.inPosition
+        self.u_from_xyz_ws = closest_point_to_flattened_ground.parameterU
+        self.v_from_xyz_ws = closest_point_to_flattened_ground.parameterV
 
 
         uv_to_xyz = self.utility('pointOnPolyConstraint', 'uv_to_xyz')
         target = uv_to_xyz.target[0]
-        self.in_u = target.targetU
-        self.in_v = target.targetV
-        self.out_xyz = uv_to_xyz.constraintTranslate
+        self.u_to_xyz_ws = target.targetU
+        self.v_to_xyz_ws = target.targetV
+        self.xyz_ws_from_uv = uv_to_xyz.constraintTranslate
+
+
+        ws_to_cs = self.utility('pointMatrixMult', 'world_space_to_cam_space')
+        gcn.camera.inverse_world_matrix >> ws_to_cs.inMatrix
+        self.xyz_ws_to_xyz_cs = ws_to_cs.inPoint
+        self.xyz_cs_from_xyz_ws = ws_to_cs.output
 
 
         illuminee = Illuminee({'obj': context['mesh'] + '_ground'}, mesh)
@@ -135,6 +209,7 @@ class Ground(Network):
 
         sets(sg, e=True, fe=mesh.getTransform())
     
+
     def animate(self):
         anim_curve_list = gcn.slice_offset.listConnections(s=True, d=False, type='animCurve')   
         if anim_curve_list:
@@ -149,11 +224,11 @@ class Ground(Network):
             prev_frame = frame - 1
             r0 = self.decompose_camera.outputTranslate.get(t=prev_frame)
             r1 = self.decompose_camera.outputTranslate.get(t=frame)
-            delta_r = [r1c - r0c for r0c, r1c in zip(r0, r1)]
+            Δr = [r1c - r0c for r0c, r1c in zip(r0, r1)]
             d0 = self.camera_ground_vector.get(t=prev_frame)
             d1 = self.camera_ground_vector.get(t=frame)
             d_avg = [(d1c + d0c) / 2 for d0c, d1c in zip(d0, d1)]
-            dot = sum(delta_r_c * d_avg_c for delta_r_c, d_avg_c in zip(delta_r, d_avg))
+            dot = sum(delta_r_c * d_avg_c for delta_r_c, d_avg_c in zip(Δr, d_avg))
             new_offset = prev_offset + dot
             gcn.slice_offset.setKey(t=frame, v=new_offset)
             prev_offset = new_offset

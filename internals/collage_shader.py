@@ -2,7 +2,7 @@ from pymel.core import *
 from internals.network import Network
 from internals import palettes
 from internals.world_placement import WorldPlacement
-from internals.screen_placement import ScreenPlacement
+from internals.screen_placement import CalculatedScreenPlacement
 from internals.tracking_projection import TrackingProjection
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
@@ -79,7 +79,7 @@ class FacetShader(Network):
             image_up = facet_up
         else:
             image_up = palette.settings()['up']
-        screen_placement = self.build(ScreenPlacement(context, world_placement, image_up))
+        screen_placement = self.build(CalculatedScreenPlacement(context, world_placement, image_up))
 
         shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
         shade_ramp.attr('type').set(0)

@@ -3,7 +3,7 @@ from internals.network import Network
 from internals.global_controls import gcn
 
 
-class ScreenPlacement(Network):
+class CalculatedScreenPlacement(Network):
     relevant_context = ['mesh', 'facet']
     
     def __init__(self, context, world_placement, image_up):
@@ -82,3 +82,23 @@ scale = $scale_ss;
         self.position_y = node.position_y
         self.rotation = node.rotation
         self.scale = node.scale
+
+
+class AnimatedScreenPlacement(Network):
+    relevant_context = ['mesh', 'index']
+
+    def __init__(self, _):
+        self.position_x_curve = createNode('animCurveTU')
+        self.position_x = self.position_x_curve.output
+        self.position_y_curve = createNode('animCurveTU')
+        self.position_y = self.position_y_curve.output
+        self.rotation_curve = createNode('animCurveTU')
+        self.rotation = self.rotation_curve.output
+        self.scale_curve = createNode('animCurveTU')
+        self.scale_curve = self.scale_curve_curve.output
+    
+    def set_key(self, time, x, y, rotation, scale):
+        self.position_x_curve.addKey(time, x)
+        self.position_y_curve.addKey(time, y)
+        self.rotation_curve.addKey(time, rotation)
+        self.scale_curve.addKey(time, scale)
