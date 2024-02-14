@@ -72,10 +72,10 @@ class Ground(Network):
         self.lightness = illuminee.control_node.lightness
 
 
-        decompose_camera = self.utility('decomposeMatrix', 'decompose_camera')
-        gcn.camera.world_matrix >> decompose_camera.inputMatrix
+        self.decompose_camera = self.utility('decomposeMatrix', 'decompose_camera')
+        gcn.camera.world_matrix >> self.decompose_camera.inputMatrix
         camera_rotation_matrix = self.utility('composeMatrix', 'camera_rotation_matrix')
-        decompose_camera.outputRotate >> camera_rotation_matrix.inputRotate
+        self.decompose_camera.outputRotate >> camera_rotation_matrix.inputRotate
         move_1_z = self.utility('composeMatrix', 'move_1_z')
         move_1_z.inputTranslateZ.set(1)
         move_1_in_camera_direction = self.utility('multMatrix', 'move_1_in_camera_direction')
@@ -90,7 +90,7 @@ class Ground(Network):
         sampler_info = self.utility('samplerInfo', 'sampler_info')
         point_relative_to_camera = self.utility('aiSubtract', 'point_relative_to_camera')
         sampler_info.pointWorld >> point_relative_to_camera.input1
-        decompose_camera.outputTranslate >> point_relative_to_camera.input2
+        self.decompose_camera.outputTranslate >> point_relative_to_camera.input2
         depth_calculator = self.utility('aiDot', 'depth_calculator')
         point_relative_to_camera.outColor >> depth_calculator.input1
         self.camera_ground_vector >> depth_calculator.input2
@@ -134,11 +134,29 @@ class Ground(Network):
                         break
 
         sets(sg, e=True, fe=mesh.getTransform())
+    
+    def animate(self):
+        anim_curve_list = gcn.slice_offset.listConnections(s=True, d=False, type='animCurve')   
+        if anim_curve_list:
+            delete(anim_curve_list[0])
 
+        playback_min = int(playbackOptions(min=True, q=True))
+        playback_max = int(playbackOptions(max=True, q=True))
         
-
-
-
+        prev_offset = gcn.initial_slice_offset.get()
+        gcn.slice_offset.setKey(t=playback_min, v=gcn.initial_slice_offset.get())
+        for frame in range(playback_min + 1, playback_max + 1):
+            prev_frame = frame - 1
+            r0 = self.decompose_camera.outputTranslate.get(t=prev_frame)
+            r1 = self.decompose_camera.outputTranslate.get(t=frame)
+            delta_r = [r1c - r0c for r0c, r1c in zip(r0, r1)]
+            d0 = self.camera_ground_vector.get(t=prev_frame)
+            d1 = self.camera_ground_vector.get(t=frame)
+            d_avg = [(d1c + d0c) / 2 for d0c, d1c in zip(d0, d1)]
+            dot = sum(delta_r_c * d_avg_c for delta_r_c, d_avg_c in zip(delta_r, d_avg))
+            new_offset = prev_offset + dot
+            gcn.slice_offset.setKey(t=frame, v=new_offset)
+            prev_offset = new_offset
 
 
 

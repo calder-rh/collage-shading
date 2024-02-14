@@ -20,4 +20,5 @@ importlib.reload(illuminee)
 importlib.reload(ground)
 
 from internals import ground
-xyz = ground.Ground({'mesh': 'test'}, ls(sl=True)[0])
+g = ground.Ground({'mesh': 'test'}, ls(sl=True)[0])
+g.animate()
