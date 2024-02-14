@@ -2,7 +2,7 @@ from pymel.core import *
 from internals.network import Network
 
 from internals.global_groups import control_groups
-from internals.invisible import set_visibility_in_render
+from internals.utilities import set_visibility_in_render
 
 
 class SunPairShaders(Network):
@@ -149,7 +149,7 @@ class SunPair(Network):
         direction_matrix_composer.outputMatrix >> direction_matrix_inverter.inputMatrix
         self.direction_inverse_matrix = direction_matrix_inverter.outputMatrix
 
-        last_row_getter = self.utility('pointMatrixMult', 'last_row_getter')
+        last_row_getter = self.utility('pointMatrixMult', 'last_row_getter') # TODO why does this work? this gets the last column
         direction_matrix_composer.outputMatrix >> last_row_getter.inMatrix
         last_row_getter.inPoint.set((0, 0, 1))
         sampler_info = self.utility('samplerInfo', 'sampler_info')

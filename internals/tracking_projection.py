@@ -2,6 +2,7 @@ from pymel.core import *
 from internals.network import Network
 from internals.global_controls import gcn
 from internals.shading_path import relative_path
+from internals.utilities import connect_texture_placement
 
 
 class TrackingProjectionPlacement(Network):
@@ -87,24 +88,7 @@ class TrackingProjection(Network):
         image_texture.fileTextureName.set(facet_image.image, type='string')
 
         # Connect placement to texture
-        self.texture_placement.outUV >> image_texture.uvCoord
-        self.texture_placement.outUvFilterSize >> image_texture.uvFilterSize
-        self.texture_placement.vertexCameraOne >> image_texture.vertexCameraOne
-        self.texture_placement.vertexUvOne >> image_texture.vertexUvOne
-        self.texture_placement.vertexUvThree >> image_texture.vertexUvThree
-        self.texture_placement.vertexUvTwo >> image_texture.vertexUvTwo
-        self.texture_placement.coverage >> image_texture.coverage
-        self.texture_placement.mirrorU >> image_texture.mirrorU
-        self.texture_placement.mirrorV >> image_texture.mirrorV
-        self.texture_placement.noiseUV >> image_texture.noiseUV
-        self.texture_placement.offset >> image_texture.offset
-        self.texture_placement.repeatUV >> image_texture.repeatUV
-        self.texture_placement.rotateFrame >> image_texture.rotateFrame
-        self.texture_placement.rotateUV >> image_texture.rotateUV
-        self.texture_placement.stagger >> image_texture.stagger
-        self.texture_placement.translateFrame >> image_texture.translateFrame
-        self.texture_placement.wrapU >> image_texture.wrapU
-        self.texture_placement.wrapV >> image_texture.wrapV
+        connect_texture_placement(self.texture_placement, image_texture)
 
         # Create the projection
         projection = self.utility('projection', 'projection')

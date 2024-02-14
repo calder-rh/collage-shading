@@ -7,13 +7,17 @@ if code_path not in sys.path:
     sys.path.append(code_path)
 
 import importlib
-from internals import network, sun_pair, global_groups, global_controls, ground
+from internals import network, sun_pair, global_controls, global_groups, measured_gradient, luminance, shadow_influences, utilities, illuminee, ground
 importlib.reload(network)
-importlib.reload(global_groups)
 importlib.reload(sun_pair)
 importlib.reload(global_controls)
+importlib.reload(global_groups)
+importlib.reload(measured_gradient)
+importlib.reload(luminance)
+importlib.reload(shadow_influences)
+importlib.reload(utilities)
+importlib.reload(illuminee)
 importlib.reload(ground)
 
 from internals import ground
-xyz = ground.sy_to_uv(0.5, 0)
-SCENE.marker.t.set(xyz)
+xyz = ground.Ground({'mesh': 'test'}, ls(sl=True)[0])

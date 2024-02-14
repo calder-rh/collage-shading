@@ -1,8 +1,10 @@
 from pymel.core import *
 
 from internals.network import Network
-from internals.coordinate_converter import CoordinateConverter
 from internals.global_controls import gcn
+from internals.utilities import connect_texture_placement
+from internals.illuminee import Illuminee
+from random import random
 import math
 
 
@@ -11,29 +13,12 @@ class GroundSlice(Network):
     relevant_context = ['index']
     delete = ...
 
-    def __init__(self, _, index):
+    def __init__(self, _, ground, index):
         self.texture_placement = self.utility('place2dTexture', 'texture_placement')
         self.image_texture = self.texture('file', 'image_texture', isColorManaged=True)
         self.projection = self.utility('projection', 'projection')
 
-        self.texture_placement.outUV >> self.image_texture.uvCoord
-        self.texture_placement.outUvFilterSize >> self.image_texture.uvFilterSize
-        self.texture_placement.vertexCameraOne >> self.image_texture.vertexCameraOne
-        self.texture_placement.vertexUvOne >> self.image_texture.vertexUvOne
-        self.texture_placement.vertexUvThree >> self.image_texture.vertexUvThree
-        self.texture_placement.vertexUvTwo >> self.image_texture.vertexUvTwo
-        self.texture_placement.coverage >> self.image_texture.coverage
-        self.texture_placement.mirrorU >> self.image_texture.mirrorU
-        self.texture_placement.mirrorV >> self.image_texture.mirrorV
-        self.texture_placement.noiseUV >> self.image_texture.noiseUV
-        self.texture_placement.offset >> self.image_texture.offset
-        self.texture_placement.repeatUV >> self.image_texture.repeatUV
-        self.texture_placement.rotateFrame >> self.image_texture.rotateFrame
-        self.texture_placement.rotateUV >> self.image_texture.rotateUV
-        self.texture_placement.stagger >> self.image_texture.stagger
-        self.texture_placement.translateFrame >> self.image_texture.translateFrame
-        self.texture_placement.wrapU >> self.image_texture.wrapU
-        self.texture_placement.wrapV >> self.image_texture.wrapV
+        connect_texture_placement(self.texture_placement, self.image_texture)
 
         self.projection.projType.set(8)
         gcn.camera.camera_message >> self.projection.linkedCamera
@@ -43,8 +28,118 @@ class GroundSlice(Network):
 
 
 
-class SliceShader(Network):
-    ...
+class Ground(Network):
+    relevant_context = ['mesh']
+
+    def __init__(self, context, mesh):
+        obj_type = mesh.type()
+        if mesh.type() == 'transform':
+            mesh = mesh.getShape()
+
+        original_mesh_transformer = self.utility('transformGeometry', 'original_mesh_transformer')
+        mesh.outMesh >> original_mesh_transformer.inputGeometry
+        mesh.worldMatrix[0] >> original_mesh_transformer.transform
+        original_mesh = original_mesh_transformer.outputGeometry
+
+        flattener = self.utility('transformGeometry', 'flattener')
+        original_mesh >> flattener.inputGeometry
+        flattener_matrix = self.utility('composeMatrix', 'flattener_matrix')
+        flattener_matrix.inputScaleY.set(0)
+        flattener_matrix.outputMatrix >> flattener.transform
+        
+        closest_point_to_flattened_ground = self.utility('closestPointOnMesh', 'closest_point_to_flattened_ground')
+        flattener.outputGeometry >> closest_point_to_flattened_ground.inMesh
+        closest_point_to_flattened_ground.inPositionY.set(0)
+
+        self.in_x = closest_point_to_flattened_ground.inPositionX
+        self.in_z = closest_point_to_flattened_ground.inPositionZ
+        self.out_u = closest_point_to_flattened_ground.parameterU
+        self.out_v = closest_point_to_flattened_ground.parameterV
+
+
+        uv_to_xyz = self.utility('pointOnPolyConstraint', 'uv_to_xyz')
+        target = uv_to_xyz.target[0]
+        self.in_u = target.targetU
+        self.in_v = target.targetV
+        self.out_xyz = uv_to_xyz.constraintTranslate
+
+
+        illuminee = Illuminee({'obj': context['mesh'] + '_ground'}, mesh)
+        illuminee.control_node.gradient_weight.disconnect()
+        illuminee.control_node.gradient_weight.set(0)
+        illuminee.control_node.angle_weight.disconnect()
+        illuminee.control_node.angle_weight.set(1)
+        self.lightness = illuminee.control_node.lightness
+
+
+        decompose_camera = self.utility('decomposeMatrix', 'decompose_camera')
+        gcn.camera.world_matrix >> decompose_camera.inputMatrix
+        camera_rotation_matrix = self.utility('composeMatrix', 'camera_rotation_matrix')
+        decompose_camera.outputRotate >> camera_rotation_matrix.inputRotate
+        move_1_z = self.utility('composeMatrix', 'move_1_z')
+        move_1_z.inputTranslateZ.set(1)
+        move_1_in_camera_direction = self.utility('multMatrix', 'move_1_in_camera_direction')
+        move_1_z.outputMatrix >> move_1_in_camera_direction.matrixIn[0]
+        camera_rotation_matrix.outputMatrix >> move_1_in_camera_direction.matrixIn[1]
+        camera_rotation_calculator = self.utility('decomposeMatrix', 'camera_rotation_calculator')
+        move_1_in_camera_direction.matrixSum >> camera_rotation_calculator.inputMatrix
+        camera_ground_vector_calculator = self.utility('normalize', 'camera_ground_vector')
+        self.camera_ground_vector = camera_ground_vector_calculator.output
+        camera_rotation_calculator.outputTranslateX >> camera_ground_vector_calculator.inputX
+        camera_rotation_calculator.outputTranslateZ >> camera_ground_vector_calculator.inputZ
+        sampler_info = self.utility('samplerInfo', 'sampler_info')
+        point_relative_to_camera = self.utility('aiSubtract', 'point_relative_to_camera')
+        sampler_info.pointWorld >> point_relative_to_camera.input1
+        decompose_camera.outputTranslate >> point_relative_to_camera.input2
+        depth_calculator = self.utility('aiDot', 'depth_calculator')
+        point_relative_to_camera.outColor >> depth_calculator.input1
+        self.camera_ground_vector >> depth_calculator.input2
+        depth = self.multiply(depth_calculator.outValue, -1, 'depth')
+
+        depth_minus_offset = self.subtract(depth, gcn.slice_offset, 'depth_minus_offset')
+        total_depth = self.multiply(gcn.slice_spacing, gcn.slice_count, 'total_depth')
+        normalized_depth = self.divide(depth_minus_offset, total_depth, 'normalized_depth')
+
+
+        ramp = self.utility('aiRampRgb', 'ramp')
+        ramp.attr('type').set(0)
+        normalized_depth >> ramp.input
+        softness = 0.1
+        slice_count = gcn.slice_count.get()
+        for i in range(slice_count - 1):
+            ramp.ramp[2 * i].ramp_Position.set((i + 1 - softness / 2) / slice_count)
+            ramp.ramp[2 * i + 1].ramp_Position.set((i + 1 + softness / 2) / slice_count)
+        random_color = [random() for _ in range(3)]
+        for i in range(slice_count - 1):
+            ramp.ramp[2 * i].ramp_Color.set(random_color)
+            random_color = [random() for _ in range(3)]
+            ramp.ramp[2 * i + 1].ramp_Color.set(random_color)
+        
+
+        shader = self.shader('surfaceShader', 'ground_shader')
+        ramp.outColor >> shader.outColor
+
+        sg = self.utility('shadingEngine', 'ground_shader_SG')
+        shader.outColor >> sg.surfaceShader
+
+
+        connections = listConnections(mesh, type='shadingEngine')
+        if connections:
+            old_sg = connections[0]
+            for dsm in old_sg.dagSetMembers:
+                connection = listConnections(dsm)[0]
+                if connection.getShape() == mesh:
+                    if mesh.instObjGroups:
+                        mesh.instObjGroups[0] // dsm
+                        break
+
+        sets(sg, e=True, fe=mesh.getTransform())
+
+        
+
+
+
+
 
 
 

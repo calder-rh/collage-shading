@@ -82,7 +82,7 @@ class FacetShader(Network):
         screen_placement = self.build(ScreenPlacement(context, world_placement, image_up))
 
         shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
-        setAttr(f'{shade_ramp.name()}.type', 0)
+        shade_ramp.attr('type').set(0)
         lightness >> shade_ramp.input
 
         for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):

@@ -1,7 +1,7 @@
 from pymel.core import *
 from internals.network import Network
 
-from internals.invisible import set_visibility_in_render
+from internals.utilities import set_visibility_in_render
 from internals.sun_pair import SunPairShaders, SunPair
 from internals.global_groups import control_groups
 
@@ -43,6 +43,7 @@ class GlobalControls(Network):
 
             gcn = lighting_controller_trans
             addAttr(gcn, ln='gradients_weight', min=0, smx=1, dv=1)
+            addAttr(gcn, ln='angle_weight', min=0, smx=1, dv=0)
             addAttr(gcn, ln='lights_weight', min=0, smx=1, dv=1)
             addAttr(gcn, ln='shadow_influences_weight', min=0, smx=1, dv=0.5)
 
@@ -75,6 +76,11 @@ class GlobalControls(Network):
             addAttr(gcn, ln='colorB', at='float', parent='color')
             lighting_controller_trans.atmospheric_perspective.color.set(0.5, 0.7, 1)
 
+            addAttr(gcn, ln='ground', at='compound', nc=3)
+            addAttr(gcn, p='ground', ln='slice_spacing', dv=10)
+            addAttr(gcn, p='ground', ln='slice_count', at='short', dv=10)
+            addAttr(gcn, p='ground', ln='initial_slice_offset', dv=0)
+
             addAttr(gcn, ln='camera', at='compound', nc=7)
             addAttr(gcn, p='camera', ln='camera_message', at='message')
             addAttr(gcn, p='camera', ln='world_matrix', at='matrix')
@@ -106,10 +112,11 @@ class GlobalControls(Network):
             addAttr(gcn, ln='camera_direction_inverse_matrix', at='matrix', p='suns')
             addAttr(gcn, ln='camera_surface_point_z', p='suns')
 
-            addAttr(gcn, ln='other_internals', at='compound', nc=4)
+            addAttr(gcn, ln='other_internals', at='compound', nc=5)
             addAttr(gcn, p='other_internals', ln='noise')
             addAttr(gcn, p='other_internals', ln='shadow_influences')
             addAttr(gcn, p='other_internals', ln='ground_mesh', dt='mesh')
+            addAttr(gcn, p='other_internals', ln='slice_offset')
             addAttr(gcn, p='other_internals', ln='atmospheric_perspective_amount')
 
 

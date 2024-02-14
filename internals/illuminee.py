@@ -5,7 +5,7 @@ from internals.global_controls import gcn
 from internals.measured_gradient import MeasuredGradient
 from internals.luminance import luminance_node
 from internals.shadow_influences import shadow_distance_node
-from internals.invisible import set_visibility_in_render
+from internals.utilities import set_visibility_in_render
 
 
 class Illuminee(Network):
@@ -20,16 +20,18 @@ class Illuminee(Network):
         else:
             raise Exception('Invalid illuminee input. Must be a mesh or transform node.')
 
-        shape = transform_node.getShape()
-        if shape:
-            parents = listRelatives(obj, p=True)
-            kwargs = {}
-            if parents:
-                kwargs['p'] = parents[0]
-            self.control_node = group(obj, n=obj.name() + '_illuminee', **kwargs)
-            parent(obj, self.control_node)
-        else:
-            self.control_node = transform_node
+        # shape = transform_node.getShape()
+        # if shape:
+        #     parents = listRelatives(obj, p=True)
+        #     kwargs = {}
+        #     if parents:
+        #         kwargs['p'] = parents[0]
+        #     self.control_node = group(obj, n=obj.name() + '_illuminee', **kwargs)
+        #     parent(obj, self.control_node)
+        # else:
+        #     self.control_node = transform_node
+        
+        self.control_node = transform_node
 
         is_new = not(self.control_node.hasAttr('used_as_illuminee'))
         if is_new:
@@ -38,6 +40,7 @@ class Illuminee(Network):
 
             # Add user customizable attributes
             addAttr(self.control_node, ln='gradient_weight', min=0, smx=1, dv=1)
+            addAttr(self.control_node, ln='angle_weight', min=0, smx=1, dv=0)
             addAttr(self.control_node, ln='lights_weight', min=0, smx=1, dv=1)
             addAttr(self.control_node, ln='shadow_influences_weight', min=0, smx=1, dv=1)
             addAttr(self.control_node, ln='adjustment', min=-1, max=1, dv=0)
@@ -111,6 +114,7 @@ class Illuminee(Network):
         
     def connect_to_global(self):
         gcn.gradients_weight >> self.control_node.gradient_weight
+        gcn.angle_weight >> self.control_node.angle_weight
         gcn.lights_weight >> self.control_node.lights_weight
         gcn.shadow_influences_weight >> self.control_node.shadow_influences_weight
 
