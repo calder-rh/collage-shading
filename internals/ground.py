@@ -74,14 +74,22 @@ class GroundBand(Network):
         # x_ss_samples = [0]
         x_ss_samples = [-0.3, 0, 0.3]
 
+
         def intersection_from_four_points(x1, y1, x2, y2, x3, y3, x4, y4):
             a = x1 * y2 - y1 * x2
             b = x3 * y4 - y3 * x4
             c = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
             if not c:
                 return None
+            
             xi = (a * (x3 - x4) - (x1 - x2) * b) / c
             yi = (a * (y3 - y4) - (y1 - y2) * b) / c
+            if not (   ((x2 - x1) * (xi - x1) > 0)
+                    == ((y2 - y1) * (yi - y1) > 0) 
+                    == ((x4 - x3) * (xi - x3) > 0) 
+                    == ((y4 - y3) * (yi - y3) > 0)):
+                return None
+
             return xi, yi
 
         for frame in range(playback_min + 1, playback_max + 1):
@@ -105,32 +113,42 @@ class GroundBand(Network):
                 # Δxy_ss = (current_xy_ss[0] - prev_xy_ss[0], current_xy_ss[1] - prev_xy_ss[1])
                 # Δxy_ss_list.append(Δxy_ss)
             
+            if not xy_ss_list:
+                continue
+            
             intersection_points = [intersection_from_four_points(*p1, *p2, *p3, *p4) for (p1, p2), (p3, p4) in combinations(xy_ss_list, 2)]
             # print([((p1, p2), (p3, p4)) for (p1, p2), (p3, p4) in combinations(xy_ss_list, 2)])
             # print(intersection_points)
             # print(len(xy_ss_list), len(intersection_points))
 
-            if any(ip is None for ip in intersection_points):
-                # scale is same as before
-                dx, dy = [sum(p2[c] - p1[c] for p1, p2 in xy_ss_list) / len(xy_ss_list) for c in range(2)]
-                x_ss += dx
-                y_ss += dy
-                print('ok')
+            if True: #not intersection_points or any(ip is None for ip in intersection_points):
+                scale_factor = calculate_scale(frame) / calculate_scale(frame - 1)
+                dx_avg, dy_avg = [sum(p2[c] - p1[c] for p1, p2 in xy_ss_list) / len(xy_ss_list) for c in range(2)]
+
+                if scale_factor == 1:
+                    x_ss += dx_avg
+                    y_ss += dy_avg
+                    self.screen_placement.set_key(frame, x_ss, y_ss, 0, scale)
+                    continue
+                else:
+                    x_avg, y_avg = [sum(p2[c] for _, p2 in xy_ss_list) / len(xy_ss_list) for c in range(2)]
+                    x_piv = x_avg - dx_avg / (scale_factor - 1)
+                    y_piv = y_avg - dy_avg / (scale_factor - 1)
             else:
-                xi, yi = [sum(p[c] for p in intersection_points) / len(intersection_points) for c in range(2)]
+                x_piv, y_piv = [sum(p[c] for p in intersection_points) / len(intersection_points) for c in range(2)]
                 scale_factors = []
                 for (x1, y1), (x2, y2) in xy_ss_list:
-                    d1 = ((x1 - xi) ** 2 + (y1 - yi) ** 2) ** 0.5
-                    d2 = ((x2 - xi) ** 2 + (y2 - yi) ** 2) ** 0.5
+                    d1 = ((x1 - x_piv) ** 2 + (y1 - y_piv) ** 2) ** 0.5
+                    d2 = ((x2 - x_piv) ** 2 + (y2 - y_piv) ** 2) ** 0.5
                     if d1:
                         scale_factors.append(d2 / d1)
                 if not scale_factors:
                     raise('something weird is going on.')
                 scale_factor = sum(scale_factors) / len(scale_factors)
                 
-                scale *= scale_factor
-                x_ss = xi + (x_ss - xi) * scale_factor
-                y_ss = yi + (y_ss - yi) * scale_factor
+            scale *= scale_factor
+            x_ss = x_piv + (x_ss - x_piv) * scale_factor
+            y_ss = y_piv + (y_ss - y_piv) * scale_factor
 
             # print(scale, )
             self.screen_placement.set_key(frame, x_ss, y_ss, 0, scale)
@@ -220,7 +238,7 @@ class Ground(Network):
         ramp = self.utility('aiRampRgb', 'ramp')
         ramp.attr('type').set(0)
         normalized_depth >> ramp.input
-        softness = 0.1
+        softness = 0.3
         band_count = gcn.band_count.get()
 
         for i in range(band_count - 1):
