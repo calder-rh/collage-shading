@@ -8,7 +8,7 @@ from internals.utilities import connect_texture_placement
 class TrackingProjectionPlacement(Network):
     relevant_context = ['mesh', 'facet', 'image']
 
-    def __init__(self, context, screen_placement, facet_image):
+    def __init__(self, context, screen_placement, facet_image, mod=False, scale_exp=0.5):
         attrs = ['center_ss_x',
                  'center_ss_y',
                  'rotation_ss',
@@ -21,10 +21,17 @@ class TrackingProjectionPlacement(Network):
                  'translate_frame_v',
                  'repeat_uv',
                  'rotate_uv']
+        
+        if mod:
+            u_mod_str = r' % (1 / repeat_uv)'
+            v_mod_str = r' % (aspect_ratio / repeat_uv)'
+        else:
+            u_mod_str = v_mod_str = ''
 
-        expr = """
+        expr = f"""
 // float $final_size = scale_ss * image_scale;
-float $final_size = pow(scale_ss * image_scale, 0.5);
+float $final_size = image_scale * pow(scale_ss, {scale_exp});
+// float $final_size = 0.3;
 float $final_rotation = rotation_ss;
 
 vector $image_centered_on_object = <<center_ss_x - $final_size / 2, center_ss_y - $final_size / 2>>;
@@ -40,10 +47,10 @@ vector $center_of_transformed_image_relative_to_target = $center_of_rotated_imag
 
 vector $center_of_image_ss = $center_of_transformed_image_relative_to_target + $image_centered_on_object;
 
-translate_frame_u = $center_of_image_ss.x + 0.5;
-translate_frame_v = aspect_ratio * $center_of_image_ss.y + 0.5;
 repeat_uv = 1 / $final_size;
 rotate_uv = $final_rotation;
+translate_frame_u = ($center_of_image_ss.x + 0.5){u_mod_str};
+translate_frame_v = (aspect_ratio * $center_of_image_ss.y + 0.5){v_mod_str};
 """
 
         node = self.expression('placement_values', attrs, expr)
@@ -74,13 +81,13 @@ rotate_uv = $final_rotation;
 class TrackingProjection(Network):
     relevant_context = ['mesh', 'facet', 'image']
 
-    def __init__(self, context, screen_placement, facet_image, reuse_placement):
+    def __init__(self, context, screen_placement, facet_image, reuse_placement, mod=False, scale_exp=0.5):
         if reuse_placement:
             placement_context = {k: v for k, v in context.items() if k != 'image'}
         else:
             placement_context = context
         
-        self.build(TrackingProjectionPlacement(placement_context, screen_placement, facet_image))
+        self.build(TrackingProjectionPlacement(placement_context, screen_placement, facet_image, mod=mod, scale_exp=scale_exp))
 
         # Create the image texture node
         image_texture = self.texture('file', 'image_texture', isColorManaged=True)

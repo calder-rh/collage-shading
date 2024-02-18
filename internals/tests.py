@@ -7,7 +7,7 @@ if code_path not in sys.path:
     sys.path.append(code_path)
 
 import importlib
-from internals import network, sun_pair, global_controls, global_groups, measured_gradient, luminance, shadow_influences, utilities, illuminee, ground
+from internals import network, sun_pair, global_controls, global_groups, measured_gradient, luminance, shadow_influences, utilities, illuminee, screen_placement, tracking_projection, palettes, ground
 importlib.reload(network)
 importlib.reload(sun_pair)
 importlib.reload(global_controls)
@@ -17,8 +17,11 @@ importlib.reload(luminance)
 importlib.reload(shadow_influences)
 importlib.reload(utilities)
 importlib.reload(illuminee)
+importlib.reload(screen_placement)
+importlib.reload(tracking_projection)
+importlib.reload(palettes)
 importlib.reload(ground)
 
 from internals import ground
-g = ground.Ground({'mesh': 'test'}, ls(sl=True)[0])
+g = ground.Ground({'mesh': 'test'}, PyNode('FLOWER_SET:terrain'), '/Users/calder/Documents/Animation/Shading/shading/fantasy/palettes/3 grass/aigrass.jpg')
 g.animate()

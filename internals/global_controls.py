@@ -77,9 +77,9 @@ class GlobalControls(Network):
             lighting_controller_trans.atmospheric_perspective.color.set(0.5, 0.7, 1)
 
             addAttr(gcn, ln='ground', at='compound', nc=3)
-            addAttr(gcn, p='ground', ln='slice_spacing', dv=10)
-            addAttr(gcn, p='ground', ln='slice_count', at='short', dv=10)
-            addAttr(gcn, p='ground', ln='initial_slice_offset', dv=0)
+            addAttr(gcn, p='ground', ln='band_spacing', dv=10)
+            addAttr(gcn, p='ground', ln='band_count', at='short', dv=10)
+            addAttr(gcn, p='ground', ln='initial_band_offset', dv=0)
 
             addAttr(gcn, ln='camera', at='compound', nc=7)
             addAttr(gcn, p='camera', ln='camera_message', at='message')
@@ -116,7 +116,7 @@ class GlobalControls(Network):
             addAttr(gcn, p='other_internals', ln='noise')
             addAttr(gcn, p='other_internals', ln='shadow_influences')
             addAttr(gcn, p='other_internals', ln='ground_mesh', dt='mesh')
-            addAttr(gcn, p='other_internals', ln='slice_offset')
+            addAttr(gcn, p='other_internals', ln='band_offset')
             addAttr(gcn, p='other_internals', ln='atmospheric_perspective_amount')
 
 
