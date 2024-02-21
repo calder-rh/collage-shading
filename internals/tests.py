@@ -23,5 +23,5 @@ importlib.reload(palettes)
 importlib.reload(ground)
 
 from internals import ground
-g = ground.Ground({'mesh': 'test'}, PyNode('FLOWER_SET:terrain'), '/Users/calder/Documents/Animation/Shading/shading/fantasy/palettes/3 grass/aigrass.jpg')
+g = ground.Ground({'mesh': 'test'}, PyNode('pPlane1'), '/Users/calder/Documents/Animation/Shading/shading/fantasy/palettes/3 grass/aigrass.jpg')
 g.animate()
