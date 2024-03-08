@@ -236,11 +236,10 @@ class GlobalControls(Network):
             distance_node = self.utility('aiDistance', 'distance_from_influence')
             distance_node.traceSet.set(GlobalControls.shadow_trace_set)
             gcn.shadow_influences_distance >> distance_node.distance
-            distance_remap = self.utility('remapValue', 'remap_distance')
-            distance_remap.outputMin.set(-1)
-            distance_remap.outputMax.set(0)
-            distance_node.outColorR >> distance_remap.inputValue
-            gcn.shadow_influence = distance_remap.outValue
+            shadow_flip1 = self.subtract(1, distance_node.outColorR, 'shadow_flip1')
+            shadow_power = self.power(shadow_flip1, 2, 'shadow_power')
+            shadow_flip2 = self.subtract(0, shadow_power, 'shadow_flip2')
+            shadow_flip2 >> gcn.shadow_influence
 
             self.node = gcn
         else:

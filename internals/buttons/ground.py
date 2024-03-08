@@ -14,7 +14,6 @@ importlib.reload(illuminee)
 importlib.reload(screen_placement)
 importlib.reload(tracking_projection)
 importlib.reload(palettes)
-importlib.reload(atmospheric_perspective)
 importlib.reload(ground)
 
 from internals import ground
