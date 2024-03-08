@@ -22,7 +22,7 @@ def run():
     selection = ls(sl=True, transforms=True)
     selected_shapes = {item.getShape() for item in selection}
     selected_lights = lights & selected_shapes
-    selected_illuminees = [Illuminee(item) for item in selection if item.hasAttr('used_as_illuminee')]
+    selected_illuminees = [Illuminee(item) for item in selection if item.hasAttr('used_as_illuminee') and item.used_as_illuminee.get()]
 
     if selected_illuminees:
         for illuminee in selected_illuminees:

@@ -62,7 +62,7 @@ class SunPair(Network):
                 sun_platonic.subdivisionMode.set(2)
                 sun_platonic.subdivisions.set(1)
                 sun_platonic.sphericalInflation.set(0)
-                sun_trans.s.set((0.5, 0.5, 0.5))
+                sun_trans.s.set((10, 10, 10))
                 connection_counts = {}
                 for edge in sun_shape.e:
                     for vertex in edge.connectedVertices():
@@ -80,6 +80,7 @@ class SunPair(Network):
                 antisun_trans, antisun_platonic = polyPlatonic()
                 antisun_trans = PyNode(antisun_trans)
                 antisun_trans.rename(antisun_trans_name)
+                antisun_trans.s.set((20, 20, 20))
                 antisun_platonic = PyNode(antisun_platonic)
                 antisun_platonic.rename(antisun_platonic_name)
                 antisun_shape = antisun_trans.getShape()

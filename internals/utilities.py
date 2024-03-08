@@ -1,3 +1,7 @@
+from pymel.core import *
+import time, threading
+
+
 def set_visibility_in_render(shape, value):
     shape.primaryVisibility.set(value)
     shape.castsShadows.set(value)
@@ -28,3 +32,20 @@ def connect_texture_placement(placement, texture):
     placement.translateFrame >> texture.translateFrame
     placement.wrapU >> texture.wrapU
     placement.wrapV >> texture.wrapV
+
+
+def add_attr(obj, delete=False, **kwargs):
+    attr_name = kwargs['ln']
+    attr_exists = hasAttr(obj, attr_name)
+    if attr_exists and delete:
+        deleteAttr(obj.attr(attr_name))
+    if (not attr_exists) or delete:
+        addAttr(obj, **kwargs)
+
+
+def do_later(target, wait=0.1):
+    def wait_then_run():
+        time.sleep(wait)
+        target()
+    thread = threading.Thread(target=wait_then_run)
+    thread.start()

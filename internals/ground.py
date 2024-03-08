@@ -2,27 +2,61 @@ from pymel.core import *
 
 from internals.network import Network
 from internals.global_controls import gcn
+from internals.global_groups import lighting_sets
 from internals.illuminee import Illuminee
 from internals.screen_placement import AnimatedScreenPlacement
 from internals.tracking_projection import TrackingProjection
-from internals.palettes import FacetImage
+from internals import palettes
+from internals.atmospheric_perspective import AtmosphericPerspective
 
-from random import random, uniform
-from itertools import combinations, chain
+from random import uniform
+from itertools import islice
 
 
+def batched(iterable, n):
+    "Batch data into tuples of length n. The last batch may be shorter."
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    if n < 1:
+        raise ValueError('n must be at least one')
+    it = iter(iterable)
+    while batch := tuple(islice(it, n)):
+        yield batch
+
+
+# # x_ss_samples = [i / 10 for i in range(-5, 6, 1)]
+# x_ss_samples = [i / 10 for i in range(-4, 6, 2)]
+# x_ss_samples = [-0.45, -0.15, 0.15, 0.45]
+x_ss_samples = [-0.4, 0, 0.4]
 
 class GroundBand(Network):
     relevant_context = ['mesh', 'index']
 
-    def __init__(self, context, ground, index, image_path):
+    def __init__(self, context, ground, index):
         self.ground = ground
         self.index = index
 
         self.screen_placement = AnimatedScreenPlacement({'mesh': context['mesh'], 'index': str(self.index)})
-        image = FacetImage(image_path, random(), random(), 1)
-        tracking_projection = TrackingProjection({'mesh': context['mesh'], 'facet': str(self.index), 'image': 'ground'}, self.screen_placement, image, False, mod=True, scale_exp=1)
-        self.color = tracking_projection.color
+
+        palette = palettes.get_palette(palettes.ground_palette_path())
+        palette.make(1, (0.5, 0.5))
+
+        shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
+        shade_ramp.attr('type').set(0)
+        self.ground.lightness >> shade_ramp.input
+
+        for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):
+            start_index = 2 * shade_index
+            end_index = start_index + 1
+            shade_ramp.ramp[start_index].ramp_Position.set(luminance_value[0])
+            shade_ramp.ramp[end_index].ramp_Position.set(luminance_value[1])
+
+            tracking_projection_context = context | {'facet': context['index'], 'image': f'shade{shade_index}'}
+            tracking_projection = self.build(TrackingProjection(tracking_projection_context, self.screen_placement, facet_image, isinstance(palette, palettes.ImagesPalette)), add_keys=False)
+
+            tracking_projection.color >> shade_ramp.ramp[start_index].ramp_Color
+            tracking_projection.color >> shade_ramp.ramp[end_index].ramp_Color
+        
+        self.color = shade_ramp.outColor
 
 
     def z_gs(self, frame):
@@ -57,6 +91,15 @@ class GroundBand(Network):
         return x_ss, y_ss
     
 
+    def xyz_to_normal(self, xyz): 
+        self.ground.xyz_ws_to_vertex.set(xyz)
+        vertex = self.ground.vertex_from_xyz_ws.get()
+        select(self.ground.mesh.vtx[vertex])
+        normals = polyNormalPerVertex(q=True, xyz=True)
+        # return [sum([normal[c] for normal in batched(normals, 3)]) / (len(normals) / 3) for c in range(3)]
+        return [sum(c) / (len(normals) / 3) for c in zip(*batched(normals, 3))]
+    
+
     def animate(self):
         playback_min = int(playbackOptions(min=True, q=True))
         playback_max = int(playbackOptions(max=True, q=True))
@@ -68,12 +111,12 @@ class GroundBand(Network):
     
         # x_ss_samples = [i / 10 for i in range(-4, 6, 2)]
         # x_ss_samples = [0]
-        x_ss_samples = [-0.3, 0, 0.3]
+        # x_ss_samples = [-0.3, 0, 0.3]
 
         for frame in range(playback_min + 1, playback_max + 1):
             xy_ss_list = []
 
-            for sample in x_ss_samples:
+            for sample_index, sample in enumerate(x_ss_samples):
                 ground_xyz = self.x_ss_to_ground_xyz_ws(sample, frame)
                 ground_x, _, ground_z = ground_xyz
                 uv = self.ground_xyz_ws_to_uv(ground_xyz, frame)
@@ -119,14 +162,15 @@ class GroundBand(Network):
 class Ground(Network):
     relevant_context = ['mesh']
 
-    def __init__(self, context, mesh, image_path):
-        obj_type = mesh.type()
-        if mesh.type() == 'transform':
-            mesh = mesh.getShape()
+    def __init__(self, context, mesh):
+        self.mesh = mesh
+        obj_type = self.mesh.type()
+        if self.mesh.type() == 'transform':
+            self.mesh = self.mesh.getShape()
 
         original_mesh_transformer = self.utility('transformGeometry', 'original_mesh_transformer')
-        mesh.outMesh >> original_mesh_transformer.inputGeometry
-        mesh.worldMatrix[0] >> original_mesh_transformer.transform
+        self.mesh.outMesh >> original_mesh_transformer.inputGeometry
+        self.mesh.worldMatrix[0] >> original_mesh_transformer.transform
         original_mesh = original_mesh_transformer.outputGeometry
 
         flattener = self.utility('transformGeometry', 'flattener')
@@ -137,6 +181,9 @@ class Ground(Network):
         
         closest_point_to_flattened_ground = self.utility('closestPointOnMesh', 'closest_point_to_flattened_ground')
         flattener.outputGeometry >> closest_point_to_flattened_ground.inMesh
+
+        closest_point_to_regular_ground = self.utility('closestPointOnMesh', 'closest_point_to_regular_ground')
+        original_mesh >> closest_point_to_regular_ground.inMesh
 
         self.xyz_ws_to_uv = closest_point_to_flattened_ground.inPosition
         self.u_from_xyz_ws = closest_point_to_flattened_ground.parameterU
@@ -156,29 +203,29 @@ class Ground(Network):
         self.xyz_cs_from_xyz_ws = ws_to_cs.output
 
 
-        illuminee = Illuminee({'obj': context['mesh'] + '_ground'}, mesh)
+        self.xyz_ws_to_vertex = closest_point_to_regular_ground.inPosition
+        self.vertex_from_xyz_ws = closest_point_to_regular_ground.closestVertexIndex
+
+
+        illuminee = Illuminee({'obj': context['mesh'] + '_ground'}, self.mesh)
         illuminee.control_node.gradient_weight.disconnect()
         illuminee.control_node.gradient_weight.set(0)
+        illuminee.control_node.lights_weight.disconnect()
+        illuminee.control_node.lights_weight.set(0.5)
         illuminee.control_node.angle_weight.disconnect()
-        illuminee.control_node.angle_weight.set(1)
+        illuminee.control_node.angle_weight.set(0.5)
+        illuminee.control_node.min_saturation.disconnect()
+        illuminee.control_node.min_saturation.set(1)
         self.lightness = illuminee.control_node.lightness
 
+        sets(lighting_sets.global_set, add=illuminee.control_node.angle_remap.get())
 
         self.decompose_camera = self.utility('decomposeMatrix', 'decompose_camera')
         gcn.camera.world_matrix >> self.decompose_camera.inputMatrix
-        camera_rotation_matrix = self.utility('composeMatrix', 'camera_rotation_matrix')
-        self.decompose_camera.outputRotate >> camera_rotation_matrix.inputRotate
-        move_1_z = self.utility('composeMatrix', 'move_1_z')
-        move_1_z.inputTranslateZ.set(1)
-        move_1_in_camera_direction = self.utility('multMatrix', 'move_1_in_camera_direction')
-        move_1_z.outputMatrix >> move_1_in_camera_direction.matrixIn[0]
-        camera_rotation_matrix.outputMatrix >> move_1_in_camera_direction.matrixIn[1]
-        camera_rotation_calculator = self.utility('decomposeMatrix', 'camera_rotation_calculator')
-        move_1_in_camera_direction.matrixSum >> camera_rotation_calculator.inputMatrix
         camera_ground_vector_calculator = self.utility('normalize', 'camera_ground_vector')
+        gcn.camera_direction_vector_x >> camera_ground_vector_calculator.inputX
+        gcn.camera_direction_vector_z >> camera_ground_vector_calculator.inputZ
         self.camera_ground_vector = camera_ground_vector_calculator.output
-        camera_rotation_calculator.outputTranslateX >> camera_ground_vector_calculator.inputX
-        camera_rotation_calculator.outputTranslateZ >> camera_ground_vector_calculator.inputZ
         sampler_info = self.utility('samplerInfo', 'sampler_info')
         point_relative_to_camera = self.utility('aiSubtract', 'point_relative_to_camera')
         sampler_info.pointWorld >> point_relative_to_camera.input1
@@ -193,13 +240,13 @@ class Ground(Network):
         normalized_depth = self.divide(depth_minus_offset, total_depth, 'normalized_depth')
 
         
-        self.bands = [GroundBand(context | {'index': str(i)}, self, i, image_path) for i in range(gcn.band_count.get())]
+        self.bands = [GroundBand(context | {'index': str(i)}, self, i) for i in range(gcn.band_count.get())]
 
 
         ramp = self.utility('aiRampRgb', 'ramp')
         ramp.attr('type').set(0)
         normalized_depth >> ramp.input
-        softness = 0.3
+        softness = 0.4
         band_count = gcn.band_count.get()
 
         for i in range(band_count - 1):
@@ -208,25 +255,26 @@ class Ground(Network):
             ramp.ramp[2 * i + 1].ramp_Position.set((i + 1 + softness / 2) / band_count)
             self.bands[i + 1].color >> ramp.ramp[2 * i + 1].ramp_Color
         
+        ap = AtmosphericPerspective(context, ramp.outColor)
 
         shader = self.shader('surfaceShader', 'ground_shader')
-        ramp.outColor >> shader.outColor
+        ap.color >> shader.outColor
 
         sg = self.utility('shadingEngine', 'ground_shader_SG')
         shader.outColor >> sg.surfaceShader
 
 
-        connections = listConnections(mesh, type='shadingEngine')
+        connections = listConnections(self.mesh, type='shadingEngine')
         if connections:
             old_sg = connections[0]
             for dsm in old_sg.dagSetMembers:
                 connection = listConnections(dsm)[0]
-                if connection.getShape() == mesh:
-                    if mesh.instObjGroups:
-                        mesh.instObjGroups[0] // dsm
+                if connection.getShape() == self.mesh:
+                    if self.mesh.instObjGroups:
+                        self.mesh.instObjGroups[0] // dsm
                         break
 
-        sets(sg, e=True, fe=mesh.getTransform())
+        sets(sg, e=True, fe=self.mesh.getTransform())
     
 
     def animate(self):
@@ -254,49 +302,3 @@ class Ground(Network):
         
         for band in self.bands:
             band.animate()
-
-
-
-
-
-# class GroundUVConverter(Network):
-#     relevant_context = []
-
-#     def __init__(self, _):
-#         xyz_to_uv_calculator = self.utility('closestPointOnMesh', 'xyz_to_uv_calculator')
-#         result = xyz_to_uv_calculator.result
-#         gcn.ground_mesh.connect(xyz_to_uv_calculator.inMesh)
-#         self.xyz_in = xyz_to_uv_calculator.inPosition
-#         self.u_out = result.parameterU
-#         self.v_out = result.parameterV
-
-# guc = GroundUVConverter({})
-
-
-# millimeters_per_inch = 25.4
-
-# def sy_to_xyz(y_interp, time):
-#     camera_trans = listConnections(gcn.camera_message, s=True, d=False)[0]
-#     camera_shape = camera_trans.getShape()
-
-#     camera_tx = camera_trans.tx.get(t=time)
-#     camera_ty = camera_trans.ty.get(t=time)
-#     camera_tz = camera_trans.tz.get(t=time)
-#     camera_rx = camera_trans.rx.get(t=time)
-#     camera_ry = camera_trans.ry.get(t=time)
-#     ground_y = gcn.ground_y.get(t=time)
-#     vertical_aperture = millimeters_per_inch * camera_shape.horizontalFilmAperture.get() / gcn.camera.aspect_ratio.get()
-#     focal_length = camera_shape.focalLength.get(t=time)
-
-#     horizon_screen_y = focal_length * math.tan(-math.radians(camera_rx)) / vertical_aperture
-#     screen_y_min = -0.5
-#     screen_y_max = min(0.5, horizon_screen_y)
-#     screen_y = screen_y_min + (screen_y_max - screen_y_min) * y_interp
-
-#     angle = camera_rx + math.degrees(math.atan(screen_y * vertical_aperture / focal_length))
-#     flat_distance = (camera_ty - ground_y) / math.tan(math.radians(angle))
-#     flat_x = camera_tx + flat_distance * math.sin(math.radians(camera_ry))
-#     flat_y = ground_y
-#     flat_z = camera_tz + flat_distance * math.cos(math.radians(camera_ry))
-
-#     return flat_x, flat_y, flat_z

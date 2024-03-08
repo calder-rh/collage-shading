@@ -22,8 +22,8 @@ def run():
     if len(selection) not in [1, 2]:
         selection_error()
     
-    illuminee_list = [item for item in selection if item.hasAttr('used_as_illuminee')]
-    proxy_list = [item for item in selection if not item.hasAttr('used_as_illuminee')]
+    illuminee_list = [item for item in selection if item.hasAttr('used_as_illuminee') and item.used_as_illuminee.get()]
+    proxy_list = [item for item in selection if not (item.hasAttr('used_as_illuminee') and item.used_as_illuminee.get())]
 
     if not (len(illuminee_list) == 1 and len(proxy_list) <= 1):
         selection_error()

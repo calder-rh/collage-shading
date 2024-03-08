@@ -5,7 +5,7 @@ from internals.global_controls import gcn
 from internals.measured_gradient import MeasuredGradient
 from internals.luminance import luminance_node
 from internals.shadow_influences import shadow_distance_node
-from internals.utilities import set_visibility_in_render
+from internals.utilities import set_visibility_in_render, add_attr, do_later
 
 
 class Illuminee(Network):
@@ -33,43 +33,46 @@ class Illuminee(Network):
         
         self.control_node = transform_node
 
-        is_new = not(self.control_node.hasAttr('used_as_illuminee'))
+        is_new = not(self.control_node.hasAttr('used_as_illuminee') and self.control_node.used_as_illuminee.get())
         if is_new:
             # Add this to the set of all illuminee nodes
             sets(lighting_sets.illuminees, add=self.control_node)
 
             # Add user customizable attributes
-            addAttr(self.control_node, ln='gradient_weight', min=0, smx=1, dv=1)
-            addAttr(self.control_node, ln='angle_weight', min=0, smx=1, dv=0)
-            addAttr(self.control_node, ln='lights_weight', min=0, smx=1, dv=1)
-            addAttr(self.control_node, ln='shadow_influences_weight', min=0, smx=1, dv=1)
-            addAttr(self.control_node, ln='adjustment', min=-1, max=1, dv=0)
+            add_attr(self.control_node, ln='gradient_weight', min=0, smx=1, dv=1)
+            add_attr(self.control_node, ln='angle_weight', min=0, smx=1, dv=0)
+            add_attr(self.control_node, ln='lights_weight', min=0, smx=1, dv=1)
+            add_attr(self.control_node, ln='shadow_influences_weight', min=0, smx=1, dv=1)
+            add_attr(self.control_node, ln='adjustment', min=-1, max=1, dv=0)
 
-            addAttr(self.control_node, ln='min_value', min=0, max=1, dv=0)
-            addAttr(self.control_node, ln='max_value', min=0, max=1, dv=1)
+            add_attr(self.control_node, ln='angle_remap', at='message')
 
-            addAttr(self.control_node, ln='min_saturation', min=0, max=1, dv=0.5)
-            addAttr(self.control_node, ln='saturation_falloff_point', min=0, max=1, dv=0.5)
+            add_attr(self.control_node, ln='min_value', min=0, max=1, dv=0)
+            add_attr(self.control_node, ln='max_value', min=0, max=1, dv=1)
+
+            add_attr(self.control_node, ln='min_saturation', min=0, max=1, dv=0.5)
+            add_attr(self.control_node, ln='saturation_falloff_point', min=0, max=1, dv=0.5)
 
             # Add internal attributes
-            addAttr(self.control_node, ln='internals', at='compound', nc=6)
-            addAttr(self.control_node, p='internals', ln='used_as_illuminee', at='bool', dv=True)
+            add_attr(self.control_node, ln='internals', at='compound', nc=6)
+            add_attr(self.control_node, p='internals', ln='used_as_illuminee', at='bool', dv=True)
 
             # Outputs for other networks
-            addAttr(self.control_node, p='internals', ln='measurement_mesh', dt='mesh')
-            addAttr(self.control_node, p='internals', ln='lightness')
-            addAttr(self.control_node, p='internals', ln='saturation')
+            add_attr(self.control_node, p='internals', ln='measurement_mesh', dt='mesh')
+            add_attr(self.control_node, p='internals', ln='lightness')
+            add_attr(self.control_node, p='internals', ln='saturation')
 
-            addAttr(self.control_node, ln='proxy', at='bool')
+            add_attr(self.control_node, p='internals', ln='added_lights', at='message')
+            add_attr(self.control_node, p='internals', ln='excluded_lights', at='message')
+            
+            add_attr(self.control_node, ln='proxy', at='bool')
 
             # Light sets
             self.added_lights = self.make(sets, 'added_lights', em=True)
             sets(lighting_sets.added_lights_sets, add=self.added_lights)
-            addAttr(self.control_node, p='internals', ln='added_lights', at='message')
-
+        
             self.excluded_lights = self.make(sets, 'excluded_lights', em=True)
             sets(lighting_sets.excluded_lights_sets, add=self.excluded_lights)
-            addAttr(self.control_node, p='internals', ln='excluded_lights', at='message')
 
             self.added_lights.message >> self.control_node.internals.added_lights
             self.excluded_lights.message >> self.control_node.internals.excluded_lights
@@ -79,23 +82,40 @@ class Illuminee(Network):
 
 
             # Calculate the gradients
-            light_gradient = MeasuredGradient(self.context | {'sun_pair': 'light'}, self.control_node.measurement_mesh, gcn.light_sun_position, gcn.light_antisun_position, gcn.light_direction_inverse_matrix, gcn.light_surface_point_z)
-            camera_gradient = MeasuredGradient(self.context | {'sun_pair': 'camera'}, self.control_node.measurement_mesh, gcn.camera_sun_position, gcn.camera_antisun_position, gcn.camera_direction_inverse_matrix, gcn.camera_surface_point_z)
+            light_gradient = MeasuredGradient(self.context | {'sun_pair': 'light'}, self.control_node.internals.measurement_mesh, gcn.light_sun_position, gcn.light_antisun_position, gcn.light_direction_inverse_matrix, gcn.light_surface_point_z)
+            camera_gradient = MeasuredGradient(self.context | {'sun_pair': 'camera'}, self.control_node.internals.measurement_mesh, gcn.camera_sun_position, gcn.camera_antisun_position, gcn.camera_direction_inverse_matrix, gcn.camera_surface_point_z)
+
+            # Calculate the dot value
+            light_dot_remap = self.utility('remapValue', 'light_dot_remap')
+            do_later(lambda: self.control_node.angle_weight >> light_dot_remap.outputMax)
+            light_dot_remap.inputMin.set(-1)
+            gcn.other_internals.light_dot >> light_dot_remap.inputValue
+            light_dot_remap.message >> self.control_node.angle_remap
 
             # Multiply the weights and add them to create the raw lightness
-            weighted_light_gradient = self.multiply(self.control_node.gradient_weight, light_gradient.gradient_value, 'weighted_light_gradient')
-            weighted_lights = self.multiply(self.control_node.lights_weight, luminance_node.luminance, 'weighted_lights')
-            weighted_shadow_influences = self.multiply(self.control_node.shadow_influences_weight, shadow_distance_node.shadow_distance, 'weighted_shadow_influences')
-            weighted_sum_1 = self.add(weighted_light_gradient, weighted_lights, 'weighted_sum_1')
-            weighted_sum_2 = self.add(weighted_sum_1, weighted_shadow_influences, 'weighted_sum_2')
-            weighted_sum_3 = self.add(weighted_sum_2, gcn.noise, 'weighted_sum_3')
-            raw_lightness = self.add(weighted_sum_3, self.control_node.adjustment, 'raw_lightness')
+            # weighted_light_gradient = self.multiply(self.control_node.gradient_weight, light_gradient.gradient_value, 'weighted_light_gradient')
+            # weighted_lights = self.multiply(self.control_node.lights_weight, luminance_node.luminance, 'weighted_lights')
+            # weighted_shadow_influences = self.multiply(self.control_node.shadow_influences_weight, shadow_distance_node.shadow_distance, 'weighted_shadow_influences')
+            weighted_light_gradient = self.multiply(self.control_node.gradient_weight, light_gradient.gradient_value, 'weighted_light_gradient', return_node=True)
+            weighted_lights = self.multiply(self.control_node.lights_weight, luminance_node.luminance, 'weighted_lights', return_node=True)
+            weighted_shadow_influences = self.multiply(self.control_node.shadow_influences_weight, shadow_distance_node.shadow_distance, 'weighted_shadow_influences', return_node=True)
+            def connect_weights():
+                self.control_node.gradient_weight >> weighted_light_gradient.floatA
+                self.control_node.lights_weight >> weighted_lights.floatA
+                self.control_node.shadow_influences_weight >> weighted_shadow_influences.floatA
+            do_later(connect_weights)
+
+            weighted_sum_1 = self.add(weighted_light_gradient.outFloat, weighted_lights.outFloat, 'weighted_sum_1')
+            weighted_sum_2 = self.add(weighted_sum_1, weighted_shadow_influences.outFloat, 'weighted_sum_2')
+            weighted_sum_3 = self.add(weighted_sum_2, light_dot_remap.outValue, 'weighted_sum_3')
+            weighted_sum_4 = self.add(weighted_sum_3, gcn.noise, 'weighted_sum_4')
+            raw_lightness = self.add(weighted_sum_4, self.control_node.adjustment, 'raw_lightness')
 
             # Apply the min/max adjustment to this value
             corrected_lightness = self.utility('remapValue', 'corrected_lightness')
             raw_lightness >> corrected_lightness.inputValue
-            self.control_node.min_value >> corrected_lightness.inputMin
-            self.control_node.max_value >> corrected_lightness.inputMax
+            self.control_node.min_value >> corrected_lightness.outputMin
+            self.control_node.max_value >> corrected_lightness.outputMax
             corrected_lightness.outValue >> self.control_node.lightness
 
             # Calculate the saturation
@@ -108,6 +128,8 @@ class Illuminee(Network):
 
             self.load_meshes()
             self.link_lights()
+
+            
         else:
             self.added_lights = self.control_node.internals.added_lights.get()
             self.excluded_lights = self.control_node.internals.excluded_lights.get()
@@ -141,10 +163,12 @@ class Illuminee(Network):
         self._set_measurement_mesh(meshes)
 
         for mesh in meshes:
-            if mesh.hasAttr('lightness'):
-                self.control_node.internals.lightness >> mesh.lightness
-            if mesh.hasAttr('saturation'):
-                self.control_node.internals.saturation >> mesh.saturation
+            if not mesh.hasAttr('lightness'):
+                addAttr(mesh, ln='lightness')
+            self.control_node.internals.lightness >> mesh.lightness
+            if not mesh.hasAttr('saturation'):
+                addAttr(mesh, ln='saturation')
+            self.control_node.internals.saturation >> mesh.saturation
     
     def unload_meshes(self):
         for attribute in listConnections(self.control_node.internals.lightness, s=False, d=True, p=True):

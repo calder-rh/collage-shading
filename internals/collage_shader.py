@@ -7,6 +7,7 @@ from internals.tracking_projection import TrackingProjection
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
 from internals.global_controls import gcn
+from internals.atmospheric_perspective import AtmosphericPerspective
 import json, re
 
 
@@ -174,11 +175,11 @@ class CollageShader(Network):
 
         if not obj_shape.hasAttr('lightness'):
             addAttr(obj_shape, ln='lightness')
-        gcn.default_lightness >> obj_shape.lightness
+            gcn.default_lightness >> obj_shape.lightness
 
         if not obj_shape.hasAttr('saturation'):
             addAttr(obj_shape, ln='saturation')
-        obj_shape.saturation.set(1)
+            obj_shape.saturation.set(1)
 
 
         last_texture = None
@@ -222,57 +223,11 @@ class CollageShader(Network):
         raw_color >> desaturator.color
         obj_shape.saturation >> desaturator.saturation[1].saturation_FloatValue
 
-        # Atmospheric perspective:
-    
-        object_hsv = self.utility('rgbToHsv', 'object_hsv')
-        desaturator.outColor >> object_hsv.inRgb
-
-        atmosphere_hsv = self.utility('rgbToHsv', 'atmosphere_hsv')
-        gcn.color >> atmosphere_hsv.inRgb
-
-        atmosphere_blend = self.utility('blendColors', 'atmosphere_blend')
-        gcn.color >> atmosphere_blend.color1
-        desaturator.outColor >> atmosphere_blend.color2
-        gcn.atmospheric_perspective_amount >> atmosphere_blend.blender
-        blend_hsv = self.utility('rgbToHsv', 'blend_hsv')
-        atmosphere_blend.output >> blend_hsv.inRgb
-
-        color_builder = self.utility('hsvToRgb', 'color_builder')
-
-        # Hue
-
-        blend_hsv.outHsvH >> color_builder.inHsvR
-
-        # Saturation
-
-        saturation_lerp = self.utility('remapValue', 'saturation_lerp')
-        gcn.atmospheric_perspective_amount >> saturation_lerp.inputValue
-        object_hsv.outHsvS >> saturation_lerp.outputMin
-        atmosphere_hsv.outHsvS >> saturation_lerp.outputMax
-
-        blend_s_over_lerp_s = self.divide(blend_hsv.outHsvS, saturation_lerp.outValue, 'blend_s_over_lerp_s')
-        flip_1 = self.subtract(1, blend_s_over_lerp_s, 'flip_1')
-        power = self.power(flip_1, 3, 'power')
-        flip_2 = self.subtract(1, power, 'flip_2')
-        adjusted_saturation = self.multiply(flip_2, saturation_lerp.outValue, 'adjusted_saturation')
-        adjusted_saturation >> color_builder.inHsvG
-
-        # Value
-
-        final_min_value = self.multiply(atmosphere_hsv.outHsvV, 0.2, 'final_value_min')
-        min_value = self.multiply(gcn.atmospheric_perspective_amount, final_min_value, 'min_value')
-        max_value = self.utility('remapValue', 'max_value')
-        max_value.outputMin.set(1)
-        atmosphere_hsv.outHsvV >> max_value.outputMax
-        gcn.atmospheric_perspective_amount >> max_value.inputValue
-        adjusted_value = self.utility('remapValue', 'adjusted_value')
-        min_value >> adjusted_value.outputMin
-        max_value.outValue >> adjusted_value.outputMax
-        object_hsv.outHsvV >> adjusted_value.inputValue
-        adjusted_value.outValue >> color_builder.inHsvB
+        # Apply atmospheric perspective effect
+        ap = AtmosphericPerspective(context, desaturator.outColor)
         
         shader = self.shader('surfaceShader', 'collage_shader')
-        color_builder.outRgb >> shader.outColor
+        ap.color >> shader.outColor
 
         sg = self.utility('shadingEngine', 'collage_shader_SG')
         shader.outColor >> sg.surfaceShader

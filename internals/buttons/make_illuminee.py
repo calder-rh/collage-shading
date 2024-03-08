@@ -1,7 +1,7 @@
 from pymel.core import *
 
 import importlib
-from internals import measured_gradient, network, global_groups, global_controls, luminance, shadow_influences, illuminee, utilities
+from internals import measured_gradient, network, global_groups, global_controls, luminance, shadow_influences, utilities, illuminee
 importlib.reload(network)
 importlib.reload(global_groups)
 importlib.reload(global_controls)

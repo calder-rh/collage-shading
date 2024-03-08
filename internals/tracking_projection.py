@@ -1,7 +1,6 @@
 from pymel.core import *
 from internals.network import Network
 from internals.global_controls import gcn
-from internals.shading_path import relative_path
 from internals.utilities import connect_texture_placement
 
 
@@ -29,9 +28,7 @@ class TrackingProjectionPlacement(Network):
             u_mod_str = v_mod_str = ''
 
         expr = f"""
-// float $final_size = scale_ss * image_scale;
 float $final_size = image_scale * pow(scale_ss, {scale_exp});
-// float $final_size = 0.3;
 float $final_rotation = rotation_ss;
 
 vector $image_centered_on_object = <<center_ss_x - $final_size / 2, center_ss_y - $final_size / 2>>;

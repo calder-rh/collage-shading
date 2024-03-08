@@ -8,6 +8,7 @@ import re
 from abc import ABC, abstractmethod
 from random import uniform
 from enum import Enum
+from os import walk
 
 
 solid_region = 0.05
@@ -226,3 +227,13 @@ def get_palette(input):
         return ImagesPalette(path.parent)
     else:
         return GradientPalette(path)
+
+
+def ground_palette_path():
+    ground_regex = r'(\d+).*ground!.*'
+    current_path = shading_path('palettes')
+    for root, dirs, _ in walk(current_path, topdown=False, followlinks=True):
+        for dirname in dirs:
+            if re.fullmatch(ground_regex, dirname):
+                return Path(root, dirname)
+    raise Exception('No ground palette found.')
