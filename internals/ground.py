@@ -7,7 +7,6 @@ from internals.illuminee import Illuminee
 from internals.screen_placement import AnimatedScreenPlacement
 from internals.tracking_projection import TrackingProjection
 from internals import palettes
-from internals.atmospheric_perspective import AtmosphericPerspective
 
 from random import uniform
 from itertools import islice
@@ -255,10 +254,8 @@ class Ground(Network):
             ramp.ramp[2 * i + 1].ramp_Position.set((i + 1 + softness / 2) / band_count)
             self.bands[i + 1].color >> ramp.ramp[2 * i + 1].ramp_Color
         
-        ap = AtmosphericPerspective(context, ramp.outColor)
-
         shader = self.shader('surfaceShader', 'ground_shader')
-        ap.color >> shader.outColor
+        ramp.outColor >> shader.outColor
 
         sg = self.utility('shadingEngine', 'ground_shader_SG')
         shader.outColor >> sg.surfaceShader

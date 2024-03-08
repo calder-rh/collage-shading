@@ -7,7 +7,6 @@ from internals.tracking_projection import TrackingProjection
 from internals.dialog_with_support import dialog_with_support
 from internals.unique_name import format_unique_name
 from internals.global_controls import gcn
-from internals.atmospheric_perspective import AtmosphericPerspective
 import json, re
 
 
@@ -222,12 +221,9 @@ class CollageShader(Network):
         desaturator = self.utility('remapHsv', 'desaturator')
         raw_color >> desaturator.color
         obj_shape.saturation >> desaturator.saturation[1].saturation_FloatValue
-
-        # Apply atmospheric perspective effect
-        ap = AtmosphericPerspective(context, desaturator.outColor)
         
         shader = self.shader('surfaceShader', 'collage_shader')
-        ap.color >> shader.outColor
+        desaturator.color >> shader.outColor
 
         sg = self.utility('shadingEngine', 'collage_shader_SG')
         shader.outColor >> sg.surfaceShader

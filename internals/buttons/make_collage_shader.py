@@ -1,14 +1,13 @@
 from pymel.core import *
 
 import importlib
-from internals import network, shading_path, global_controls, surface_values, coordinate_converter, palettes, atmospheric_perspective, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, unique_name
+from internals import network, shading_path, global_controls, surface_values, coordinate_converter, palettes, collage_shader, world_placement, screen_placement, tracking_projection, dialog_with_support, unique_name
 importlib.reload(network)
 importlib.reload(shading_path)
 importlib.reload(global_controls)
 importlib.reload(surface_values)
 importlib.reload(coordinate_converter)
 importlib.reload(palettes)
-importlib.reload(atmospheric_perspective)
 importlib.reload(collage_shader)
 importlib.reload(world_placement)
 importlib.reload(screen_placement)

@@ -65,17 +65,6 @@ class GlobalControls(Network):
             addAttr(gcn, ln='sun_distance', min=0, smx=100000, dv=10000)
 
             addAttr(gcn, ln='texture_scale', min=0, smx=100, dv=10)
-            
-            addAttr(gcn, ln='atmospheric_perspective', at='compound', nc=5)
-            addAttr(gcn, p='atmospheric_perspective', ln='enable', at='bool')
-            addAttr(gcn, p='atmospheric_perspective', ln='min_distance', min=0, smx=1000, dv=100)
-            addAttr(gcn, p='atmospheric_perspective', ln='half_distance', min=1, smx=10000, dv=1000)
-            addAttr(gcn, p='atmospheric_perspective', ln='color', at='float3', uac=True)
-            addAttr(gcn, ln='colorR', at='float', parent='color')
-            addAttr(gcn, ln='colorG', at='float', parent='color')
-            addAttr(gcn, ln='colorB', at='float', parent='color')
-            addAttr(gcn, p='atmospheric_perspective', ln='enhance_saturation', min=1, max=5, dv=2)
-            lighting_controller_trans.atmospheric_perspective.color.set(0.5, 0.7, 1)
 
             addAttr(gcn, ln='ground', at='compound', nc=3)
             addAttr(gcn, p='ground', ln='band_spacing', dv=200)
@@ -113,12 +102,11 @@ class GlobalControls(Network):
             addAttr(gcn, ln='camera_direction_inverse_matrix', at='matrix', p='suns')
             addAttr(gcn, ln='camera_surface_point_z', p='suns')
 
-            addAttr(gcn, ln='other_internals', at='compound', nc=8)
+            addAttr(gcn, ln='other_internals', at='compound', nc=7)
             addAttr(gcn, p='other_internals', ln='noise')
             addAttr(gcn, p='other_internals', ln='shadow_influences')
             addAttr(gcn, p='other_internals', ln='ground_mesh', dt='mesh')
             addAttr(gcn, p='other_internals', ln='band_offset')
-            addAttr(gcn, p='other_internals', ln='atmospheric_perspective_amount')
             addAttr(gcn, p='other_internals', ln='camera_direction_vector', at='float3')
             addAttr(gcn, ln='camera_direction_vector_x', at='float', p='camera_direction_vector')
             addAttr(gcn, ln='camera_direction_vector_y', at='float', p='camera_direction_vector')
@@ -253,27 +241,6 @@ class GlobalControls(Network):
             distance_remap.outputMax.set(0)
             distance_node.outColorR >> distance_remap.inputValue
             gcn.shadow_influence = distance_remap.outValue
-
-
-            # Calculate the atmospheric perspective amount
-
-            dx = self.subtract(camera_decomposer.outputTranslateX, global_sampler_info.pointWorldX, 'camera_point_dx')
-            dy = self.subtract(camera_decomposer.outputTranslateY, global_sampler_info.pointWorldY, 'camera_point_dy')
-            dz = self.subtract(camera_decomposer.outputTranslateZ, global_sampler_info.pointWorldZ, 'camera_point_dz')
-            dx2 = self.power(dx, 2, 'camera_point_dx_2')
-            dy2 = self.power(dy, 2, 'camera_point_dy_2')
-            dz2 = self.power(dz, 2, 'camera_point_dz_2')
-            sum_1 = self.add(dx2, dy2, 'dx2_plus_dy2')
-            sum_2 = self.add(sum_1, dz2, 'sum_of_squared_dxyz')
-            camera_distance = self.power(sum_2, 0.5, 'camera_distance')
-            offset_camera_distance = self.subtract(camera_distance, gcn.min_distance, 'offset_camera_distance')
-
-            num_half_distances = self.divide(offset_camera_distance, gcn.half_distance, 'num_half_distances')
-            original_color_remaining = self.power(0.9, num_half_distances, 'original_color_remaining')
-            atmosphere_color_amount = self.subtract(1, original_color_remaining, 'atmosphere_color_amount')
-            atmospheric_perspective_amount = self.multiply(atmosphere_color_amount, gcn.enable, 'atmospheric_perspective_amount')
-            atmospheric_perspective_amount >> gcn.atmospheric_perspective_amount
-
 
             self.node = gcn
         else:

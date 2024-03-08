@@ -1,7 +1,7 @@
 from pymel.core import *
 
 import importlib
-from internals import network, sun_pair, global_controls, global_groups, measured_gradient, luminance, shadow_influences, utilities, illuminee, screen_placement, tracking_projection, palettes, atmospheric_perspective, ground
+from internals import network, sun_pair, global_controls, global_groups, measured_gradient, luminance, shadow_influences, utilities, illuminee, screen_placement, tracking_projection, palettes, ground
 importlib.reload(network)
 importlib.reload(sun_pair)
 importlib.reload(global_controls)
