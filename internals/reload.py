@@ -1,5 +1,5 @@
 from pymel.core import *
-from internals.illuminee import Illuminee
+from internals.illuminee import make_illuminee
 
 
 def reload():
@@ -7,7 +7,7 @@ def reload():
     default_lights = set(sets(SCENE.default_lights, union=ls('::default_lights', sets=True)))
 
     for illuminee_node in illuminees:
-        illuminee = Illuminee({illuminee_node.name()}, group)
+        illuminee = make_illuminee(illuminee_node)
         illuminee.load_meshes()
 
         added_lights = set(sets(illuminee.added_lights, q=1))

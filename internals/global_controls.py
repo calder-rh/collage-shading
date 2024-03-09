@@ -45,9 +45,10 @@ class GlobalControls(Network):
             addAttr(gcn, ln='gradients_weight', min=0, smx=1, dv=1)
             addAttr(gcn, ln='angle_weight', min=0, smx=1, dv=0)
             addAttr(gcn, ln='lights_weight', min=0, smx=1, dv=1)
-            addAttr(gcn, ln='shadow_influences_weight', min=0, smx=1, dv=0.5)
+            addAttr(gcn, ln='shadow_influences_weight', min=0, max=1, dv=1)
+            addAttr(gcn, ln='adjustment', smn=-1, smx=1, dv=0)
 
-            addAttr(gcn, ln='shadow_influences_distance', min=0, smx=1, dv=1)
+            addAttr(gcn, ln='shadow_influences_distance', min=0, smx=200, dv=50)
 
             addAttr(gcn, ln='min_value', min=0, max=1, dv=0)
             addAttr(gcn, ln='max_value', min=0, max=1, dv=1)
@@ -64,7 +65,7 @@ class GlobalControls(Network):
 
             addAttr(gcn, ln='sun_distance', min=0, smx=100000, dv=10000)
 
-            addAttr(gcn, ln='texture_scale', min=0, smx=100, dv=10)
+            addAttr(gcn, ln='texture_scale', min=0, smx=1000, dv=100)
 
             addAttr(gcn, ln='ground', at='compound', nc=3)
             addAttr(gcn, p='ground', ln='band_spacing', dv=200)
@@ -213,7 +214,8 @@ class GlobalControls(Network):
 
             noise = self.utility('aiNoise', 'value_noise')
             noise.coordSpace.set(3)
-            gcn.noise_frequency >> noise.scale.scaleX
+            noise_x_frequency = self.multiply(gcn.noise_frequency, gcn.camera.aspect_ratio, 'noise_x_frequency')
+            noise_x_frequency >> noise.scale.scaleX
             gcn.noise_frequency >> noise.scale.scaleY
             gcn.noise_frequency >> noise.scale.scaleZ
 
@@ -236,10 +238,8 @@ class GlobalControls(Network):
             distance_node = self.utility('aiDistance', 'distance_from_influence')
             distance_node.traceSet.set(GlobalControls.shadow_trace_set)
             gcn.shadow_influences_distance >> distance_node.distance
-            shadow_flip1 = self.subtract(1, distance_node.outColorR, 'shadow_flip1')
-            shadow_power = self.power(shadow_flip1, 2, 'shadow_power')
-            shadow_flip2 = self.subtract(0, shadow_power, 'shadow_flip2')
-            shadow_flip2 >> gcn.shadow_influence
+            shadow_minus1 = self.subtract(distance_node.outColorR, 1, 'shadow_minus1')
+            shadow_minus1 >> gcn.shadow_influences
 
             self.node = gcn
         else:

@@ -4,12 +4,12 @@ from internals.global_groups import lighting_sets
 from internals.global_controls import gcn
 from internals.measured_gradient import MeasuredGradient
 from internals.luminance import luminance_node
-from internals.shadow_influences import shadow_distance_node
 from internals.utilities import set_visibility_in_render, add_attr, do_later
 
 
 class Illuminee(Network):
     relevant_context = ['obj']
+    delete = floatSlider
 
     def __init__(self, context, obj):
         obj_type = obj.type()
@@ -43,7 +43,7 @@ class Illuminee(Network):
             add_attr(self.control_node, ln='angle_weight', min=0, smx=1, dv=0)
             add_attr(self.control_node, ln='lights_weight', min=0, smx=1, dv=1)
             add_attr(self.control_node, ln='shadow_influences_weight', min=0, smx=1, dv=1)
-            add_attr(self.control_node, ln='adjustment', min=-1, max=1, dv=0)
+            add_attr(self.control_node, ln='adjustment', smn=-1, smx=1, dv=0)
 
             add_attr(self.control_node, ln='angle_remap', at='message')
 
@@ -54,17 +54,18 @@ class Illuminee(Network):
             add_attr(self.control_node, ln='saturation_falloff_point', min=0, max=1, dv=0.5)
 
             # Add internal attributes
-            add_attr(self.control_node, ln='internals', at='compound', nc=6)
-            add_attr(self.control_node, p='internals', ln='used_as_illuminee', at='bool', dv=True)
+            # add_attr(self.control_node, ln='internals', at='compound', nc=3)
+    
+            add_attr(self.control_node, ln='used_as_illuminee', at='bool', dv=True)
 
             # Outputs for other networks
-            add_attr(self.control_node, p='internals', ln='measurement_mesh', dt='mesh')
-            add_attr(self.control_node, p='internals', ln='lightness')
-            add_attr(self.control_node, p='internals', ln='saturation')
+            add_attr(self.control_node, ln='lightness')
+            add_attr(self.control_node, ln='saturation')
 
-            add_attr(self.control_node, p='internals', ln='added_lights', at='message')
-            add_attr(self.control_node, p='internals', ln='excluded_lights', at='message')
+            add_attr(self.control_node, ln='added_lights', at='message')
+            add_attr(self.control_node, ln='excluded_lights', at='message')
             
+            add_attr(self.control_node, ln='measurement_mesh', dt='mesh')
             add_attr(self.control_node, ln='proxy', at='bool')
 
             # Light sets
@@ -74,16 +75,18 @@ class Illuminee(Network):
             self.excluded_lights = self.make(sets, 'excluded_lights', em=True)
             sets(lighting_sets.excluded_lights_sets, add=self.excluded_lights)
 
-            self.added_lights.message >> self.control_node.internals.added_lights
-            self.excluded_lights.message >> self.control_node.internals.excluded_lights
+            # def connect_lighting_sets():
+            self.added_lights.message >> self.control_node.added_lights
+            self.excluded_lights.message >> self.control_node.excluded_lights
+            # do_later(connect_lighting_sets, wait_until=lambda: hasAttr(self.control_node, 'internals'), wait=10)
 
             # Connect these attributes to the global attributes
             self.connect_to_global()
 
 
             # Calculate the gradients
-            light_gradient = MeasuredGradient(self.context | {'sun_pair': 'light'}, self.control_node.internals.measurement_mesh, gcn.light_sun_position, gcn.light_antisun_position, gcn.light_direction_inverse_matrix, gcn.light_surface_point_z)
-            camera_gradient = MeasuredGradient(self.context | {'sun_pair': 'camera'}, self.control_node.internals.measurement_mesh, gcn.camera_sun_position, gcn.camera_antisun_position, gcn.camera_direction_inverse_matrix, gcn.camera_surface_point_z)
+            light_gradient = MeasuredGradient(self.context | {'sun_pair': 'light'}, self.control_node.measurement_mesh, gcn.light_sun_position, gcn.light_antisun_position, gcn.light_direction_inverse_matrix, gcn.light_surface_point_z)
+            camera_gradient = MeasuredGradient(self.context | {'sun_pair': 'camera'}, self.control_node.measurement_mesh, gcn.camera_sun_position, gcn.camera_antisun_position, gcn.camera_direction_inverse_matrix, gcn.camera_surface_point_z)
 
             # Calculate the dot value
             light_dot_remap = self.utility('remapValue', 'light_dot_remap')
@@ -98,7 +101,7 @@ class Illuminee(Network):
             # weighted_shadow_influences = self.multiply(self.control_node.shadow_influences_weight, shadow_distance_node.shadow_distance, 'weighted_shadow_influences')
             weighted_light_gradient = self.multiply(self.control_node.gradient_weight, light_gradient.gradient_value, 'weighted_light_gradient', return_node=True)
             weighted_lights = self.multiply(self.control_node.lights_weight, luminance_node.luminance, 'weighted_lights', return_node=True)
-            weighted_shadow_influences = self.multiply(self.control_node.shadow_influences_weight, shadow_distance_node.shadow_distance, 'weighted_shadow_influences', return_node=True)
+            weighted_shadow_influences = self.multiply(self.control_node.shadow_influences_weight, gcn.shadow_influences, 'weighted_shadow_influences', return_node=True)
             def connect_weights():
                 self.control_node.gradient_weight >> weighted_light_gradient.floatA
                 self.control_node.lights_weight >> weighted_lights.floatA
@@ -131,14 +134,15 @@ class Illuminee(Network):
 
             
         else:
-            self.added_lights = self.control_node.internals.added_lights.get()
-            self.excluded_lights = self.control_node.internals.excluded_lights.get()
+            self.added_lights = self.control_node.added_lights.get()
+            self.excluded_lights = self.control_node.excluded_lights.get()
         
     def connect_to_global(self):
         gcn.gradients_weight >> self.control_node.gradient_weight
         gcn.angle_weight >> self.control_node.angle_weight
         gcn.lights_weight >> self.control_node.lights_weight
         gcn.shadow_influences_weight >> self.control_node.shadow_influences_weight
+        gcn.adjustment >> self.control_node.adjustment
 
         gcn.min_value >> self.control_node.min_value
         gcn.max_value >> self.control_node.max_value
@@ -153,27 +157,25 @@ class Illuminee(Network):
         unite.output >> self.control_node.measurement_mesh
         
     def load_meshes(self):
-        if self.control_node.proxy.get():
-            return
-
         meshes = listRelatives(self.control_node, ad=True, type='mesh')
         if not meshes:
             return
         
-        self._set_measurement_mesh(meshes)
+        if not self.control_node.proxy.get():
+            self._set_measurement_mesh(meshes)
 
         for mesh in meshes:
-            if not mesh.hasAttr('lightness'):
+            if not mesh.hasAttr('lightness', checkShape=False):
                 addAttr(mesh, ln='lightness')
-            self.control_node.internals.lightness >> mesh.lightness
-            if not mesh.hasAttr('saturation'):
+            self.control_node.lightness >> mesh.lightness
+            if not mesh.hasAttr('saturation', checkShape=False):
                 addAttr(mesh, ln='saturation')
-            self.control_node.internals.saturation >> mesh.saturation
+            self.control_node.saturation >> mesh.saturation
     
     def unload_meshes(self):
-        for attribute in listConnections(self.control_node.internals.lightness, s=False, d=True, p=True):
+        for attribute in listConnections(self.control_node.lightness, s=False, d=True, p=True):
             gcn.default_lightness >> attribute
-        for attribute in listConnections(self.control_node.internals.saturation, s=False, d=True, p=True):
+        for attribute in listConnections(self.control_node.saturation, s=False, d=True, p=True):
             attribute.set(1)
     
     def add_proxy(self, meshes):
@@ -219,3 +221,7 @@ class Illuminee(Network):
 
     def unmake(self):
         ...
+
+
+def make_illuminee(obj):
+    return Illuminee({'obj': obj.name()}, obj)

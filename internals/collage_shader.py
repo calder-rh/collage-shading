@@ -170,8 +170,6 @@ class CollageShader(Network):
             facet_centers = surface_values['facet centers']
             resolution = len(surface_values['blur values'])
 
-
-
         if not obj_shape.hasAttr('lightness'):
             addAttr(obj_shape, ln='lightness')
             gcn.default_lightness >> obj_shape.lightness
