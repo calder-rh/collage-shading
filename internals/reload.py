@@ -14,5 +14,5 @@ def reload():
         excluded_lights = set(sets(illuminee.excluded_lights, q=1))
         lights_to_link = (default_lights | added_lights) - excluded_lights
 
-        lightlink(object=illuminee.control_node, light=ls(type='light'), b=True)
+        lightlink(object=illuminee.control_node, light=ls(type='light') | ls(type='aiSkyDomeLight'), b=True)
         lightlink(object=illuminee.control_node, light=lights_to_link)
