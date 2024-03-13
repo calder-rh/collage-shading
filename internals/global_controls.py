@@ -186,7 +186,8 @@ class GlobalControls(Network):
             gcn.other_internals.light_direction_vector >> light_dot.input1
             for component, attr_axis in zip(normal_components, 'XYZ'):
                 component.outValue >> light_dot.attr('input2' + attr_axis)
-            light_dot.outValue >> gcn.other_internals.light_dot
+            flip_dot = self.multiply(light_dot.outValue, -1, 'flip_dot')
+            flip_dot >> gcn.other_internals.light_dot
 
 
 
