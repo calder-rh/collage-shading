@@ -155,7 +155,7 @@ class Illuminee(Network):
             mesh.outMesh >> unite.inputPoly[i]
             mesh.worldMatrix[0] >> unite.inputMat[i]
         unite.output >> self.control_node.measurement_mesh
-        
+    
     def load_meshes(self):
         meshes = listRelatives(self.control_node, ad=True, type='mesh')
         if not meshes:

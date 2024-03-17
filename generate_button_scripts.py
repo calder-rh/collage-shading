@@ -15,7 +15,7 @@ from button_source import {filename}
 """
 
 buttons_dir = Path(__file__).parent / 'button_source'
-python_files = [item for item in buttons_dir.iterdir() if item.is_file() and item.suffix == '.py']
+python_files = [item for item in buttons_dir.iterdir() if item.is_file() and item.suffix == '.py' and item.stem != 'system_check']
 
 for source_file in python_files:
     script_file = Path(__file__).parent / 'button_scripts' / source_file.name
