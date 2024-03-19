@@ -2,8 +2,46 @@ from pymel.core import *
 from internals.network import Network
 
 from internals.utilities import set_visibility_in_render
-from internals.sun_pair import SunPairShaders, SunPair
-from internals.global_groups import control_groups
+
+
+class LightingSets(Network):
+    relevant_context = []
+    prefix = ''
+    delete = False
+
+    def __init__(self, _):
+        self.global_set = self.make(sets, 'lighting_sets', em=True)
+
+        self.illuminees = self.make(sets, 'illuminees', em=True)
+        self.ground_meshes = self.make(sets, 'ground_meshes', em=True)
+        self.default_lights = self.make(sets, 'default_lights', em=True)
+        self.added_lights_sets = self.make(sets, 'added_lights_sets', em=True)
+        self.excluded_lights_sets = self.make(sets, 'excluded_lights_sets', em=True)
+
+        sets(self.global_set, add=self.illuminees)
+        sets(self.global_set, add=self.default_lights)
+        sets(self.global_set, add=self.added_lights_sets)
+        sets(self.global_set, add=self.excluded_lights_sets)
+    
+    def add_light(self, light):
+        sets(self.default_lights, add=light)
+    
+    def remove_light(self, light):
+        sets(self.default_lights, remove=light)
+
+lighting_sets = LightingSets({})
+
+
+class SunPairShaders(Network):
+    relevant_context = []
+    prefix = ''
+    delete = False
+
+    def __init__(self, _):
+        sun_shader = self.shader('surfaceShader', 'sun_shader')
+        sun_shader.outColor.set((1, 1, 1))
+        self.sun_sg = self.utility('shadingEngine', 'sun_SG')
+        sun_shader.outColor >> self.sun_sg.surfaceShader
 
 
 class GlobalControls(Network):
@@ -11,8 +49,7 @@ class GlobalControls(Network):
     prefix = ''
     delete = False
 
-    node_name = 'global_controls'
-    shadow_trace_set = 'shadow_influences'
+    node_name = 'shading_controls'
 
     def __init__(self, _):
         is_new = not objExists(self.node_name)
@@ -22,7 +59,6 @@ class GlobalControls(Network):
             setAttr(lighting_controller_trans.r, l=True)
             lighting_controller_shape = lighting_controller_trans.getShape()
             set_visibility_in_render(lighting_controller_shape, False)
-            parent(lighting_controller_trans, control_groups.controls)
             delete(lighting_controller_trans, ch=True)
 
             light_direction_cone_trans, _ = self.poly(polyCone, 'light_direction_cone', radius=8, height=80, heightBaseline=-1, axis=(0, 0, 1))
@@ -42,72 +78,43 @@ class GlobalControls(Network):
             set_visibility_in_render(light_direction_shape, False)
 
             gcn = lighting_controller_trans
-            addAttr(gcn, ln='gradients_weight', min=0, smx=1, dv=1)
-            addAttr(gcn, ln='angle_weight', min=0, smx=1, dv=0)
-            addAttr(gcn, ln='lights_weight', min=0, smx=1, dv=1)
-            addAttr(gcn, ln='shadow_influences_weight', min=0, max=1, dv=1)
-            addAttr(gcn, ln='adjustment', smn=-1, smx=1, dv=0)
+            addAttr(gcn, ln='default_lightness', min=0, smx=1, dv=0.5)
+            addAttr(gcn, ln='default_contrast', min=0, smx=1, dv=0.5)
 
-            addAttr(gcn, ln='shadow_influences_distance', min=0, smx=200, dv=50)
+            addAttr(gcn, ln='ground_luminance_weight', min=0, smx=1, dv=0.5)
+            addAttr(gcn, ln='ground_light_offset', smn=-1, smx=1, dv=0)
 
-            addAttr(gcn, ln='min_value', min=0, max=1, dv=0)
-            addAttr(gcn, ln='max_value', min=0, max=1, dv=1)
-
-            addAttr(gcn, ln='min_saturation', min=0, max=1, dv=0.5)
-            addAttr(gcn, ln='saturation_falloff_point', min=0, max=1, dv=0.5)
+            addAttr(gcn, ln='atmospheric_perspective', at='compound', nc=4)
+            addAttr(gcn, p='atmospheric_perspective', ln='enable', at='bool')
+            addAttr(gcn, p='atmospheric_perspective', ln='min_distance', min=0, smx=1000, dv=100)
+            addAttr(gcn, p='atmospheric_perspective', ln='half_distance', min=1, smx=2000, dv=1000)
+            addAttr(gcn, p='atmospheric_perspective', ln='color', at='float3', uac=True)
+            addAttr(gcn, ln='colorR', at='float', parent='color')
+            addAttr(gcn, ln='colorG', at='float', parent='color')
+            addAttr(gcn, ln='colorB', at='float', parent='color')
+            lighting_controller_trans.atmospheric_perspective.color.set(0.5, 0.7, 1)
 
             addAttr(gcn, ln='noise_frequency', min=1, smx=2000, dv=2000)
             addAttr(gcn, ln='noise_strength', min=0, max=1, dv=0.1)
 
-            addAttr(gcn, ln='default_lightness', min=0, max=1, dv=0.5)
+            addAttr(gcn, ln='texture_scale', min=0, smx=100, dv=10)
 
-            addAttr(gcn, ln='ground_y', smn=-10, smx=10, dv=0, k=True)
-
-            addAttr(gcn, ln='sun_distance', min=0, smx=100000, dv=10000)
-
-            addAttr(gcn, ln='texture_scale', min=0, smx=1000, dv=100)
-
-            addAttr(gcn, ln='ground', at='compound', nc=3)
-            addAttr(gcn, p='ground', ln='band_spacing', dv=200)
-            addAttr(gcn, p='ground', ln='band_count', at='short', dv=20)
-            addAttr(gcn, p='ground', ln='initial_band_offset', dv=0)
-
-            addAttr(gcn, ln='camera', at='compound', nc=7)
+            addAttr(gcn, ln='camera', at='compound', nc=8)
             addAttr(gcn, p='camera', ln='camera_message', at='message')
             addAttr(gcn, p='camera', ln='world_matrix', at='matrix')
+            addAttr(gcn, p='camera', ln='camera_position', at='float3')
+            addAttr(gcn, ln='camera_position_x', at='float', p='camera_position')
+            addAttr(gcn, ln='camera_position_y', at='float', p='camera_position')
+            addAttr(gcn, ln='camera_position_z', at='float', p='camera_position')
             addAttr(gcn, p='camera', ln='inverse_world_matrix', at='matrix')
             addAttr(gcn, p='camera', ln='focal_length', dv=35)
             addAttr(gcn, p='camera', ln='horizontal_aperture', dv=1.417)
             addAttr(gcn, p='camera', ln='aspect_ratio')
             addAttr(gcn, p='camera', ln='focal_length_factor')
 
-            addAttr(gcn, ln='suns', at='compound', nc=8)
-            addAttr(gcn, p='suns', ln='light_sun_position', at='float3')
-            addAttr(gcn, ln='light_sun_position_x', at='float', p='light_sun_position')
-            addAttr(gcn, ln='light_sun_position_y', at='float', p='light_sun_position')
-            addAttr(gcn, ln='light_sun_position_z', at='float', p='light_sun_position')
-            addAttr(gcn, p='suns', ln='light_antisun_position', at='float3')
-            addAttr(gcn, ln='light_antisun_position_x', at='float', p='light_antisun_position')
-            addAttr(gcn, ln='light_antisun_position_y', at='float', p='light_antisun_position')
-            addAttr(gcn, ln='light_antisun_position_z', at='float', p='light_antisun_position')
-            addAttr(gcn, ln='light_direction_inverse_matrix', at='matrix', p='suns')
-            addAttr(gcn, ln='light_surface_point_z', p='suns')
-            addAttr(gcn, p='suns', ln='camera_sun_position', at='float3')
-            addAttr(gcn, ln='camera_sun_position_x', at='float', p='camera_sun_position')
-            addAttr(gcn, ln='camera_sun_position_y', at='float', p='camera_sun_position')
-            addAttr(gcn, ln='camera_sun_position_z', at='float', p='camera_sun_position')
-            addAttr(gcn, p='suns', ln='camera_antisun_position', at='float3')
-            addAttr(gcn, ln='camera_antisun_position_x', at='float', p='camera_antisun_position')
-            addAttr(gcn, ln='camera_antisun_position_y', at='float', p='camera_antisun_position')
-            addAttr(gcn, ln='camera_antisun_position_z', at='float', p='camera_antisun_position')
-            addAttr(gcn, ln='camera_direction_inverse_matrix', at='matrix', p='suns')
-            addAttr(gcn, ln='camera_surface_point_z', p='suns')
-
-            addAttr(gcn, ln='other_internals', at='compound', nc=7)
+            addAttr(gcn, ln='other_internals', at='compound', nc=6)
+            addAttr(gcn, p='other_internals', ln='luminance')
             addAttr(gcn, p='other_internals', ln='noise')
-            addAttr(gcn, p='other_internals', ln='shadow_influences')
-            addAttr(gcn, p='other_internals', ln='ground_mesh', dt='mesh')
-            addAttr(gcn, p='other_internals', ln='band_offset')
             addAttr(gcn, p='other_internals', ln='camera_direction_vector', at='float3')
             addAttr(gcn, ln='camera_direction_vector_x', at='float', p='camera_direction_vector')
             addAttr(gcn, ln='camera_direction_vector_y', at='float', p='camera_direction_vector')
@@ -117,24 +124,19 @@ class GlobalControls(Network):
             addAttr(gcn, ln='light_direction_vector_y', at='float', p='light_direction_vector')
             addAttr(gcn, ln='light_direction_vector_z', at='float', p='light_direction_vector')
             addAttr(gcn, ln='light_dot', at='float', p='other_internals')
+            addAttr(gcn, ln='ground_atmospheric_perspective', p='other_internals')
 
 
+            # Find the luminance
 
-            # Make the sun pairs
+            luminance = self.utility('surfaceLuminance', 'luminance')
+            centered_luminance = self.subtract(luminance.outValue, 0.5, 'centered_luminance')
+            remapped_luminance = self.multiply(centered_luminance, 2, 'remapped_luminance')
+            remapped_luminance >> gcn.other_internals.luminance
 
-            light_sun_pair = SunPair({'usage': 'light'}, self.light_direction_trans.r, gcn.sun_distance, make_objects=True)
+
             camera_decomposer = self.utility('decomposeMatrix', 'camera_decomposer')
             gcn.camera.world_matrix >> camera_decomposer.inputMatrix
-            camera_sun_pair = SunPair({'usage': 'camera'}, camera_decomposer.outputRotate, gcn.sun_distance)
-
-            light_sun_pair.sun_position >> gcn.suns.light_sun_position
-            light_sun_pair.antisun_position >> gcn.suns.light_antisun_position
-            light_sun_pair.direction_inverse_matrix >> gcn.suns.light_direction_inverse_matrix
-            light_sun_pair.surface_point_z >> gcn.suns.light_surface_point_z
-            camera_sun_pair.sun_position >> gcn.suns.camera_sun_position
-            camera_sun_pair.antisun_position >> gcn.suns.camera_antisun_position
-            camera_sun_pair.direction_inverse_matrix >> gcn.suns.camera_direction_inverse_matrix
-            camera_sun_pair.surface_point_z >> gcn.suns.camera_surface_point_z
 
 
             # Calculate the camera and light direction vectors
@@ -164,6 +166,11 @@ class GlobalControls(Network):
             light_rotation_calculator.outputTranslate >> gcn.other_internals.light_direction_vector
 
 
+            # Calculate the camera position
+
+            camera_decomposer.outputTranslate >> gcn.camera.camera_position
+
+
             global_sampler_info = self.utility('samplerInfo', 'global_sampler_info')
 
 
@@ -189,6 +196,25 @@ class GlobalControls(Network):
             flip_dot = self.multiply(light_dot.outValue, -1, 'flip_dot')
             flip_dot >> gcn.other_internals.light_dot
 
+
+            # Calculate the atmospheric perspective for ground meshes
+
+            dx = self.subtract(gcn.camera_position_x, global_sampler_info.pointWorldX, 'camera_point_dx')
+            dy = self.subtract(gcn.camera_position_y, global_sampler_info.pointWorldY, 'camera_point_dy')
+            dz = self.subtract(gcn.camera_position_z, global_sampler_info.pointWorldZ, 'camera_point_dz')
+            dx2 = self.power(dx, 2, 'camera_point_dx_2')
+            dy2 = self.power(dy, 2, 'camera_point_dy_2')
+            dz2 = self.power(dz, 2, 'camera_point_dz_2')
+            sum_1 = self.add(dx2, dy2, 'dx2_plus_dy2')
+            sum_2 = self.add(sum_1, dz2, 'sum_of_squared_dxyz')
+            camera_distance = self.power(sum_2, 0.5, 'camera_distance')
+            offset_camera_distance = self.subtract(camera_distance, gcn.min_distance, 'offset_camera_distance')
+
+            num_half_distances = self.divide(offset_camera_distance, gcn.half_distance, 'num_half_distances')
+            original_color_remaining = self.power(0.9, num_half_distances, 'original_color_remaining')
+            atmosphere_color_amount = self.subtract(1, original_color_remaining, 'atmosphere_color_amount')
+            atmospheric_perspective_amount = self.multiply(atmosphere_color_amount, gcn.enable, 'atmospheric_perspective_amount')
+            atmospheric_perspective_amount >> gcn.ground_atmospheric_perspective
 
 
             # Calculate the aspect ratio
@@ -233,18 +259,9 @@ class GlobalControls(Network):
             
             noise_remap.outValue >> gcn.noise
 
-
-            # Calculate the shadow influences
-
-            distance_node = self.utility('aiDistance', 'distance_from_influence')
-            distance_node.traceSet.set(GlobalControls.shadow_trace_set)
-            gcn.shadow_influences_distance >> distance_node.distance
-            shadow_minus1 = self.subtract(distance_node.outColorR, 1, 'shadow_minus1')
-            shadow_minus1 >> gcn.shadow_influences
-
             self.node = gcn
         else:
-            self.node = PyNode('global_controls')
+            self.node = PyNode(self.node_name)
     
     def connect_camera(self, camera):
         camera_transform = camera.getTransform()

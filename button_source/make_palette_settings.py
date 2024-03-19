@@ -1,13 +1,15 @@
 from pymel.core import *
 
 import importlib
-from internals import shading_path, palettes, dialog_with_support
+from internals import shading_path, palettes, utilities, dialog_with_support
 importlib.reload(shading_path)
 importlib.reload(palettes)
+importlib.reload(utilities)
 importlib.reload(dialog_with_support)
 
 from internals.shading_path import shading_path
 from internals import palettes
+from internals.utilities import show_file
 from internals.dialog_with_support import dialog_with_support
 
 
@@ -35,9 +37,4 @@ def run():
         palette.make_settings_file()
     settings_path = palette.settings_path
 
-    import sys, subprocess
-    abspath = str(settings_path.absolute())
-    if sys.platform == 'darwin':
-        subprocess.run(['open', '-R', abspath])
-    elif sys.platform == 'win32':
-        subprocess.run(fr'explorer /select,"C:{abspath}"')
+    show_file(settings_path)

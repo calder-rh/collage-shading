@@ -1,10 +1,9 @@
 from pymel.core import *
 
 import importlib
-from internals import global_groups, network, sun_pair, global_controls, reload # TODO
+from internals import network, utilities, global_controls, reload # TODO
 importlib.reload(network)
-importlib.reload(global_groups)
-importlib.reload(sun_pair)
+importlib.reload(utilities)
 importlib.reload(global_controls)
 importlib.reload(reload)
 

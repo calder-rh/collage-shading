@@ -1,5 +1,5 @@
 from pymel.core import *
-import time, datetime, threading
+import time, datetime, threading, re, sys, subprocess
 
 
 def set_visibility_in_render(shape, value):
@@ -54,3 +54,15 @@ def do_later(target, wait=0.1, wait_until=None):
         target()
     thread = threading.Thread(target=wait_then_run)
     thread.start()
+
+
+def format_unique_name(obj):
+    return re.sub('^_', 'S_', obj.name().replace('|', '_'))
+
+
+def show_file(path):
+    abspath = str(path.absolute())
+    if sys.platform == 'darwin':
+        subprocess.run(['open', '-R', abspath])
+    elif sys.platform == 'win32':
+        subprocess.run(fr'explorer /select,"C:{abspath}"')

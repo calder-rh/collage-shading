@@ -1,22 +1,20 @@
 from pymel.core import *
 
 import importlib
-from internals import network, shading_path, sun_pair, global_groups, global_controls, palettes, dialog_with_support, unique_name, uv_shader
+from internals import ground, network, shading_path, global_controls, palettes, dialog_with_support, utilities
 importlib.reload(network)
 importlib.reload(shading_path)
-importlib.reload(global_groups)
-importlib.reload(sun_pair)
 importlib.reload(global_controls)
 importlib.reload(palettes)
 importlib.reload(dialog_with_support)
-importlib.reload(unique_name)
-importlib.reload(uv_shader)
+importlib.reload(utilities)
+importlib.reload(ground)
 
 from internals.shading_path import shading_path
 from internals import palettes
 from internals.dialog_with_support import dialog_with_support
-from internals.uv_shader import UVShader
-from internals.unique_name import format_unique_name
+from internals.ground import GroundShader
+from internals.utilities import format_unique_name
 
 
 def run():
@@ -42,4 +40,4 @@ def run():
             obj = node
         else:
             continue
-        UVShader({'mesh': format_unique_name(obj)}, obj, palette_path)
+        GroundShader({'mesh': format_unique_name(obj)}, obj, palette_path)

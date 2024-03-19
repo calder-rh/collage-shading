@@ -3,7 +3,7 @@ from internals.coordinate_converter import CoordinateConverter
 import json
 import itertools
 from internals.dialog_with_support import dialog_with_support
-from internals.unique_name import format_unique_name
+from internals.utilities import format_unique_name
 
 default_blur_size_ratio = 0.1
 

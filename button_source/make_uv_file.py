@@ -5,8 +5,7 @@ from internals import shading_path
 importlib.reload(shading_path)
 
 from internals.shading_path import shading_path
-
-import sys, subprocess
+from internals.utilities import show_file
 
 
 def make_uv_file(name, resolution):
@@ -15,11 +14,7 @@ def make_uv_file(name, resolution):
         confirmDialog(t='Error', m='There is already a file with that name.', b='OK', cb='OK', db='OK', icon='warning', ma='left')
         exit()
     uvSnapshot(ff='png', xr=resolution, yr=resolution, r=127, g=127, b=127, n=path, o=True)
-    abspath = str(path.absolute())
-    if sys.platform == 'darwin':
-        subprocess.run(['open', '-R', abspath])
-    elif sys.platform == 'win32':
-        subprocess.run(fr'explorer /select,"C:{abspath}"')
+    show_file(path)
 
 
 def prompt_creation(name):
