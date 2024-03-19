@@ -131,11 +131,13 @@ class CollageShader(Network):
         if connections:
             old_sg = connections[0]
             for dsm in old_sg.dagSetMembers:
-                connection = listConnections(dsm)[0]
-                if connection.getShape() == obj_shape:
-                    if obj_shape.instObjGroups:
-                        obj_shape.instObjGroups[0] // dsm
-                        break
+                connections = listConnections(dsm)
+                if connections:
+                    connection = connections[0]
+                    if connection.getShape() == obj_shape:
+                        if obj_shape.instObjGroups:
+                            obj_shape.instObjGroups[0] // dsm
+                            break
         
         if not obj_shape.hasAttr('lightness'):
             addAttr(obj_shape, ln='lightness')
