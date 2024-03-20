@@ -74,9 +74,11 @@ class Illuminee(Network):
             lightness >> self.control_node.lightness
         
             # Calculate the atmosphere blend (0 = fully object, 1 = fully atmosphere)
+            illuminee_decomposer = self.utility('decomposeMatrix', 'illuminee_decomposer')
+            self.control_node.worldMatrix[0] >> illuminee_decomposer.inputMatrix
             distance = self.utility('distanceBetween', 'distance')
             gcn.camera_position >> distance.point1
-            self.control_node.t >> distance.point2
+            illuminee_decomposer.outputTranslate >> distance.point2
             offset_distance = self.subtract(distance.distance, gcn.min_distance, 'offset_distance')
             num_half_distances = self.divide(offset_distance, gcn.half_distance, 'num_half_distances')
             original_color_remaining = self.power(0.9, num_half_distances, 'original_color_remaining')

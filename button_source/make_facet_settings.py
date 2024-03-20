@@ -38,6 +38,6 @@ def run():
 
     settings_path = candidate_path
     with settings_path.open('w') as file:
-        json.dump(file_contents, file)
+        json.dump(file_contents, file, indent=4)
     
     show_file(settings_path)
