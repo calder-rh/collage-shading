@@ -89,6 +89,6 @@ class GroundShader(Network):
         gcn.other_internals.light_dot >> light_dot_remap.inputValue
         light_dot_remap.message >> obj_transform.angle_remap
 
-        weighted_luminance = self.multiply(gcn.luminance, obj_transform.luminance_weight)
+        weighted_luminance = self.multiply(gcn.luminance, obj_transform.luminance_weight, 'weighted_luminance')
         lightness = self.add(light_dot_remap.outValue, weighted_luminance, 'lightness')
         lightness >> obj_transform.lightness
