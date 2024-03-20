@@ -43,7 +43,7 @@ class Illuminee(Network):
             add_attr(self.control_node, ln='internals', at='compound', nc=6)
     
             add_attr(self.control_node, p='internals', ln='used_as_illuminee', at='bool', dv=True)
-            addAttr(self.control_node, p='internals', ln='ground_illuminee', at='bool', dv=False)
+            add_attr(self.control_node, p='internals', ln='ground_illuminee', at='bool', dv=False)
 
             # Outputs for other networks
             add_attr(self.control_node, p='internals', ln='lightness')
