@@ -30,7 +30,7 @@ class Illuminee(Network):
         #     self.control_node.centerPivots()
         #     self.control_node.centerPivots()
 
-        is_new = not(self.control_node.hasAttr('used_as_illuminee'))
+        is_new = not(self.control_node.hasAttr('used_as_illuminee') and self.control_node.used_as_illuminee.get())
         if is_new:
             # Add this to the set of all illuminee nodes
             sets(lighting_sets.illuminees, add=self.control_node)
