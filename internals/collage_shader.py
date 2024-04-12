@@ -138,8 +138,11 @@ class CollageShader(Network):
                         if obj_shape.instObjGroups:
                             obj_shape.instObjGroups[0] // dsm
                             break
+
+        already_in_illuminee = True
         
         if not obj_shape.hasAttr('lightness'):
+            already_in_illuminee = False
             addAttr(obj_shape, ln='lightness')
             gcn.default_lightness >> obj_shape.lightness
 
@@ -246,5 +249,5 @@ class CollageShader(Network):
         obj_shape.aiSelfShadows.set(False)
 
         # Create an initial illuminee for this one object, if it's not already part of one:
-        if not (obj_shape.hasAttr('lightness', checkShape=False) and obj_shape.hasAttr('atmosphere_blend', checkShape=False)):
+        if not already_in_illuminee:
             Illuminee({'obj': obj.name()}, obj)
