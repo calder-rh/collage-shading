@@ -11,7 +11,7 @@ from enum import Enum
 from os import walk
 
 
-solid_region = 0.05
+solid_region = 0.01
 default_num_shades = 3
 palette_regex = r'(\d+)(?!.*\.json).*'
 shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
@@ -215,7 +215,7 @@ def get_palette(input):
     if isinstance(input, list):
         path = indices_to_path(input)
     elif isinstance(input, str):
-        path = Path(input)
+        path = shading_path(input)
     elif isinstance(input, Path):
         path = input
     else:

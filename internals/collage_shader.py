@@ -245,5 +245,6 @@ class CollageShader(Network):
         obj_shape.aiVisibleInDiffuseReflection.set(False)
         obj_shape.aiSelfShadows.set(False)
 
-        # Create an initial illuminee for this one object
-        Illuminee({'obj': obj.name()}, obj)
+        # Create an initial illuminee for this one object, if it's not already part of one:
+        if not (obj_shape.hasAttr('lightness', checkShape=False) and obj_shape.hasAttr('atmosphere_blend', checkShape=False)):
+            Illuminee({'obj': obj.name()}, obj)

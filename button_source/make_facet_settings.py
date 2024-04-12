@@ -16,7 +16,7 @@ def run():
     if dialog_output is None:
         exit()
     
-    output_path = Path(dialog_output[0])
+    output_path = Path(dialog_output[0]).relative_to(shading_path())
     file_contents = {
         'palette': str(output_path),
         'scale': 1,

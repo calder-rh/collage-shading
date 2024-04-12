@@ -7,7 +7,7 @@ from internals.utilities import connect_texture_placement
 class TrackingProjectionPlacement(Network):
     relevant_context = ['mesh', 'facet', 'image']
 
-    def __init__(self, context, screen_placement, facet_image, mod=False, scale_exp=0.5):
+    def __init__(self, context, screen_placement, facet_image, mod=False):
         attrs = ['center_ss_x',
                  'center_ss_y',
                  'rotation_ss',
@@ -28,7 +28,8 @@ class TrackingProjectionPlacement(Network):
             u_mod_str = v_mod_str = ''
 
         expr = f"""
-float $final_size = image_scale * pow(scale_ss, {scale_exp});
+// float $final_size = image_scale * pow(scale_ss, scale_exp);
+float $final_size = image_scale * scale_ss;
 float $final_rotation = rotation_ss;
 
 vector $image_centered_on_object = <<center_ss_x - $final_size / 2, center_ss_y - $final_size / 2>>;
@@ -78,13 +79,13 @@ translate_frame_v = (aspect_ratio * $center_of_image_ss.y + 0.5){v_mod_str};
 class TrackingProjection(Network):
     relevant_context = ['mesh', 'facet', 'image']
 
-    def __init__(self, context, screen_placement, facet_image, reuse_placement, mod=False, scale_exp=0.5):
+    def __init__(self, context, screen_placement, facet_image, reuse_placement, mod=False):
         if reuse_placement:
             placement_context = {k: v for k, v in context.items() if k != 'image'}
         else:
             placement_context = context
         
-        self.build(TrackingProjectionPlacement(placement_context, screen_placement, facet_image, mod=mod, scale_exp=scale_exp))
+        self.build(TrackingProjectionPlacement(placement_context, screen_placement, facet_image, mod=mod))
 
         # Create the image texture node
         image_texture = self.texture('file', 'image_texture', isColorManaged=True)

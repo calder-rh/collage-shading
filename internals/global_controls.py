@@ -84,10 +84,11 @@ class GlobalControls(Network):
             addAttr(gcn, ln='ground_luminance_weight', min=0, smx=1, dv=0.5)
             addAttr(gcn, ln='ground_light_offset', smn=-1, smx=1, dv=0)
 
-            addAttr(gcn, ln='atmospheric_perspective', at='compound', nc=4)
+            addAttr(gcn, ln='atmospheric_perspective', at='compound', nc=5)
             addAttr(gcn, p='atmospheric_perspective', ln='enable', at='bool')
             addAttr(gcn, p='atmospheric_perspective', ln='min_distance', min=0, smx=1000, dv=100)
             addAttr(gcn, p='atmospheric_perspective', ln='half_distance', min=1, smx=2000, dv=1000)
+            addAttr(gcn, p='atmospheric_perspective', ln='ground_half_distance', min=1, smx=2000, dv=1000)
             addAttr(gcn, p='atmospheric_perspective', ln='color', at='float3', uac=True)
             addAttr(gcn, ln='colorR', at='float', parent='color')
             addAttr(gcn, ln='colorG', at='float', parent='color')
@@ -97,7 +98,7 @@ class GlobalControls(Network):
             addAttr(gcn, ln='noise_frequency', min=1, smx=2000, dv=2000)
             addAttr(gcn, ln='noise_strength', min=0, max=1, dv=0.1)
 
-            addAttr(gcn, ln='texture_scale', min=0, smx=100, dv=10)
+            addAttr(gcn, ln='texture_scale', min=0, smx=1000, dv=100)
 
             addAttr(gcn, ln='camera', at='compound', nc=8)
             addAttr(gcn, p='camera', ln='camera_message', at='message')
@@ -193,8 +194,7 @@ class GlobalControls(Network):
             gcn.other_internals.light_direction_vector >> light_dot.input1
             for component, attr_axis in zip(normal_components, 'XYZ'):
                 component.outValue >> light_dot.attr('input2' + attr_axis)
-            flip_dot = self.multiply(light_dot.outValue, -1, 'flip_dot')
-            flip_dot >> gcn.other_internals.light_dot
+            light_dot.outValue >> gcn.other_internals.light_dot
 
 
             # Calculate the atmospheric perspective for ground meshes
@@ -210,7 +210,7 @@ class GlobalControls(Network):
             camera_distance = self.power(sum_2, 0.5, 'camera_distance')
             offset_camera_distance = self.subtract(camera_distance, gcn.min_distance, 'offset_camera_distance')
 
-            num_half_distances = self.divide(offset_camera_distance, gcn.half_distance, 'num_half_distances')
+            num_half_distances = self.divide(offset_camera_distance, gcn.ground_half_distance, 'num_half_distances')
             original_color_remaining = self.power(0.9, num_half_distances, 'original_color_remaining')
             atmosphere_color_amount = self.subtract(1, original_color_remaining, 'atmosphere_color_amount')
             atmospheric_perspective_amount = self.multiply(atmosphere_color_amount, gcn.enable, 'atmospheric_perspective_amount')
