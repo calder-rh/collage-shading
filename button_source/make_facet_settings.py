@@ -16,9 +16,10 @@ def run():
     if dialog_output is None:
         exit()
     
-    output_path = Path(dialog_output[0]).relative_to(shading_path())
+    absolute_output_path = Path(dialog_output[0])
+    relative_output_path = absolute_output_path.relative_to(shading_path())
     file_contents = {
-        'palette': str(output_path),
+        'palette': str(relative_output_path),
         'scale': 1,
         'object up': (0, 1, 0),
         'image up': 0,
@@ -31,7 +32,7 @@ def run():
             candidate_name = 'facet settings.json'
         else:
             candidate_name = f'facet settings {i}.json'
-        candidate_path = output_path.parent / candidate_name
+        candidate_path = absolute_output_path.parent / candidate_name
         if not candidate_path.exists():
             break
         i += 1
