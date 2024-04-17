@@ -2,7 +2,7 @@ from pymel.core import *
 from internals.network import Network
 
 from internals.global_controls import gcn
-from internals.utilities import connect_texture_placement, do_later
+from internals.utilities import connect_texture_placement, do_later, add_attr
 from internals.palettes import get_palette
 
 
@@ -29,20 +29,20 @@ class GroundShader(Network):
                         break
         
         # Add user customizable attributes
-        addAttr(obj_transform, ln='luminance_weight', min=0, smx=1, dv=0.5)
-        addAttr(obj_transform, ln='light_offset', smn=0, smx=1, dv=0)
+        add_attr(obj_transform, ln='luminance_weight', min=0, smx=1, dv=0.5)
+        add_attr(obj_transform, ln='light_offset', smn=0, smx=1, dv=0)
         gcn.ground_luminance_weight >> obj_transform.luminance_weight
         gcn.ground_light_offset >> obj_transform.light_offset
 
-        addAttr(obj_transform, ln='angle_remap', at='message')
+        add_attr(obj_transform, ln='angle_remap', at='message')
         
         # Make this treated as an illuminee
-        addAttr(obj_transform, ln='internals', at='compound', nc=5)
-        addAttr(obj_transform, p='internals', ln='used_as_illuminee', at='bool', dv=True)
-        addAttr(obj_transform, p='internals', ln='ground_illuminee', at='bool', dv=True)
-        addAttr(obj_transform, p='internals', ln='lightness')
-        addAttr(obj_transform, p='internals', ln='added_lights', at='message')
-        addAttr(obj_transform, p='internals', ln='excluded_lights', at='message')
+        add_attr(obj_transform, ln='internals', at='compound', nc=5)
+        add_attr(obj_transform, p='internals', ln='used_as_illuminee', at='bool', dv=True)
+        add_attr(obj_transform, p='internals', ln='ground_illuminee', at='bool', dv=True)
+        add_attr(obj_transform, p='internals', ln='lightness')
+        add_attr(obj_transform, p='internals', ln='added_lights', at='message')
+        add_attr(obj_transform, p='internals', ln='excluded_lights', at='message')
         
         palette = get_palette(palette_path)
         palette.make(1, (0, 0))
