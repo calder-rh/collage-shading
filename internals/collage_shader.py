@@ -136,7 +136,10 @@ class CollageShader(Network):
                     connection = connections[0]
                     if connection.getShape() == obj_shape:
                         if obj_shape.instObjGroups:
-                            obj_shape.instObjGroups[0] // dsm
+                            try:
+                                obj_shape.instObjGroups[0] // dsm
+                            except:
+                                break
                             break
 
         already_in_illuminee = True
