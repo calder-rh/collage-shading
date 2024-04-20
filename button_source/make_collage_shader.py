@@ -171,6 +171,9 @@ def run():
 
     else:
         for node in selection:
+            if not node:
+                continue
+            
             if node.type() == 'mesh':
                 obj = node.getTransform()
             elif node.type() == 'transform' and node.getShape().type() == 'mesh':

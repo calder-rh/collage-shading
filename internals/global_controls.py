@@ -61,9 +61,9 @@ class GlobalControls(Network):
             set_visibility_in_render(lighting_controller_shape, False)
             delete(lighting_controller_trans, ch=True)
 
-            light_direction_cone_trans, _ = self.poly(polyCone, 'light_direction_cone', radius=8, height=80, heightBaseline=-1, axis=(0, 0, 1))
-            light_source_ball_trans, _ = self.poly(polySphere, 'light_source_ball', radius=4, axis=(0, 0, 1))
-            light_source_ball_trans.tz.set(78)
+            light_direction_cone_trans, _ = self.poly(polyCone, 'light_direction_cone', radius=8, height=80, heightBaseline=-1, axis=(0, 1, 0))
+            light_source_ball_trans, _ = self.poly(polySphere, 'light_source_ball', radius=4, axis=(0, 1, 0))
+            light_source_ball_trans.ty.set(78)
             self.light_direction_trans, _ = polyUnite(light_direction_cone_trans, light_source_ball_trans, n='light_direction')
             light_direction_shape = self.light_direction_trans.getShape()
             delete(self.light_direction_trans, ch=True)

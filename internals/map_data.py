@@ -29,26 +29,52 @@ def error(msg):
     exit(1)
 
 
-def group_and_count(locations):
-    group_parents = {location: None for location in locations}
+# def group_and_count(locations):
+#     group_parents = {location: None for location in locations}
 
-    def set_representative(location):
-        while location is not None:
-            prev = location
-            location = group_parents[location]
-        return prev
+#     def set_representative(location):
+#         while location is not None:
+#             prev = location
+#             location = group_parents[location]
+#         return prev
             
-    for (y, x) in group_parents:
+#     for (y, x) in group_parents:
+#         for dy, dx in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+#             ny = y + dy
+#             nx = x + dx
+#             if (ny, nx) not in group_parents:
+#                 continue
+#             if group_parents[(ny, nx)] is None or set_representative((ny, nx)) != set_representative((y, x)):
+#                 group_parents[(y, x)] = (ny, nx)
+#                 continue
+
+#     groups = [group for group in [[location for location in locations if set_representative(location) == representative] for representative in locations] if group]
+#     indices = [len(group) for group in sorted(groups, key = lambda group: sum([y + x for y, x in group]) / len(group))]
+#     return indices
+
+
+def group_and_count(locations):
+    coords = set(locations)
+    groups = []
+
+    def dfs(coord):
+        group = groups[-1]
+        if coord in group:
+            return
+        coords.discard(coord)
+        group.add(coord)
+        y, x = coord
         for dy, dx in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
             ny = y + dy
             nx = x + dx
-            if (ny, nx) not in group_parents:
+            if (ny, nx) not in coords:
                 continue
-            if group_parents[(ny, nx)] is None or set_representative((ny, nx)) != set_representative((y, x)):
-                group_parents[(y, x)] = (ny, nx)
-                continue
-
-    groups = [group for group in [[location for location in locations if set_representative(location) == representative] for representative in locations] if group]
+            dfs((ny, nx))
+    
+    while coords:
+        groups.append(set())
+        dfs(coords.pop())
+    
     indices = [len(group) for group in sorted(groups, key = lambda group: sum([y + x for y, x in group]) / len(group))]
     return indices
 
