@@ -15,7 +15,7 @@ class TrackingProjectionPlacement(Network):
                  'image_x',
                  'image_y',
                  'image_scale',
-                 'illum_scale,',
+                 'illum_scale',
                  'aspect_ratio',
                  'translate_frame_u',
                  'translate_frame_v',
