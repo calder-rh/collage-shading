@@ -57,6 +57,7 @@ translate_frame_v = (aspect_ratio * $center_of_image_ss.y + 0.5){v_mod_str};
         screen_placement.position_y >> node.center_ss_y
         screen_placement.rotation >> node.rotation_ss
         screen_placement.scale >> node.scale_ss
+        mesh.scale_factor >> node.illum_scale
         node.image_x.set(facet_image.x)
         node.image_y.set(facet_image.y)
         node.image_scale.set(facet_image.scale)
@@ -68,7 +69,7 @@ translate_frame_v = (aspect_ratio * $center_of_image_ss.y + 0.5){v_mod_str};
         # Plug in the values we calculated
         texture_placement.coverageU.set(1)
         gcn.camera.aspect_ratio >> texture_placement.coverageV
-        mesh.scale_factor >> texture_placement.illum_scale
+
         node.translate_frame_u >> texture_placement.translateFrameU
         node.translate_frame_v >> texture_placement.translateFrameV
         node.repeat_uv >> texture_placement.repeatU
