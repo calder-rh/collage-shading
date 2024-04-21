@@ -91,7 +91,7 @@ class Illuminee(Network):
             self.link_lights()
             
         else:
-            if not self.control_node.hasAttr('scale_factor'):
+            if not self.control_node.hasAttr('scale_factor', checkShape=False):
                 add_attr(self.control_node, ln='scale_factor', min=0, smx=10, dv=1)
                 self.load_meshes()
             

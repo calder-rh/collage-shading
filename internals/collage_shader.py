@@ -142,10 +142,9 @@ class CollageShader(Network):
                                 break
                             break
 
-        already_in_illuminee = True
+        already_in_illuminee = obj_shape.hasAttr('scale_factor') and listConnections(obj_shape.scale_factor, s=True, d=False)
 
         if not obj_shape.hasAttr('scale_factor'):
-            already_in_illuminee = False
             addAttr(obj_shape, ln='scale_factor')
             obj_shape.scale_factor.set(1)
         
