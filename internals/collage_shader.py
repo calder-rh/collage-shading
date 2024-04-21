@@ -93,7 +93,7 @@ class FacetShader(Network):
             shade_ramp.ramp[end_index].ramp_Position.set(luminance_value[1])
 
             tracking_projection_context = context | {'image': f'shade{shade_index}'}
-            tracking_projection = self.build(TrackingProjection(tracking_projection_context, screen_placement, facet_image, isinstance(palette, palettes.ImagesPalette)), add_keys=False)
+            tracking_projection = self.build(TrackingProjection(tracking_projection_context, screen_placement, facet_image, isinstance(palette, palettes.ImagesPalette), obj), add_keys=False)
 
             tracking_projection.color >> shade_ramp.ramp[start_index].ramp_Color
             tracking_projection.color >> shade_ramp.ramp[end_index].ramp_Color
@@ -143,15 +143,20 @@ class CollageShader(Network):
                             break
 
         already_in_illuminee = True
+
+        if not obj_shape.hasAttr('scale_factor'):
+            already_in_illuminee = False
+            addAttr(obj_shape, ln='scale_factor')
+            obj_shape.scale_factor.set(1)
         
         if not obj_shape.hasAttr('lightness'):
-            already_in_illuminee = False
             addAttr(obj_shape, ln='lightness')
             gcn.default_lightness >> obj_shape.lightness
 
         if not obj_shape.hasAttr('atmosphere_blend'):
             addAttr(obj_shape, ln='atmosphere_blend')
             obj_shape.atmosphere_blend.set(0)
+        
 
         if palette or settings:
             if settings:

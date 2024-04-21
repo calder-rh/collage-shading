@@ -38,6 +38,7 @@ class Illuminee(Network):
             # Add user customizable attributes
             add_attr(self.control_node, ln='lightness_offset', smn=-1, smx=1, dv=0)
             add_attr(self.control_node, ln='contrast', min=0, max=1, dv=0)
+            add_attr(self.control_node, ln='scale_factor', min=0, smx=10, dv=1)
 
             # Add internal attributes
             add_attr(self.control_node, ln='internals', at='compound', nc=6)
@@ -113,6 +114,9 @@ class Illuminee(Network):
             if not mesh.hasAttr('atmosphere_blend', checkShape=False):
                 addAttr(mesh, ln='atmosphere_blend')
             self.control_node.atmosphere_blend >> mesh.atmosphere_blend
+            if not mesh.hasAttr('scale_factor', checkShape=False):
+                addAttr(mesh, ln='scale_factor')
+            self.control_node.scale_factor >> mesh.scale_factor
     
     def unload_meshes(self):
         for attribute in listConnections(self.control_node.lightness, s=False, d=True, p=True):
