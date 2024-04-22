@@ -160,7 +160,6 @@ def run():
                 json.dump(new_map_data, file, indent=4)
 
         for node in selection:
-            print(node)
             if node.type() == 'mesh':
                 obj = node.getTransform()
             elif node.type() == 'transform' and node.getShape().type() == 'mesh':

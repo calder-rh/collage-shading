@@ -11,7 +11,6 @@ def reload():
         if not node.ground_illuminee.get():
             illuminee = make_illuminee(node)
             illuminee.load_meshes()
-            print(node.name())
 
         added_lights = set(sets(node.added_lights.get(), q=1))
         excluded_lights = set(sets(node.excluded_lights.get(), q=1))
