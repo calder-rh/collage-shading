@@ -98,7 +98,7 @@ class GlobalControls(Network):
             addAttr(gcn, ln='noise_frequency', min=1, smx=2000, dv=2000)
             addAttr(gcn, ln='noise_strength', min=0, max=1, dv=0.1)
 
-            addAttr(gcn, ln='texture_scale', min=0, smx=1000, dv=100)
+            addAttr(gcn, ln='texture_scale', min=0, smx=1000, dv=500)
 
             addAttr(gcn, ln='camera', at='compound', nc=8)
             addAttr(gcn, p='camera', ln='camera_message', at='message')
