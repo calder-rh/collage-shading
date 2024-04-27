@@ -105,7 +105,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
     #     return [*itertools.product((-cube_coord, cube_coord), repeat=3)] + [[s if c == d else 0 for c in range(3)] for s in (-octahedron_coord, octahedron_coord) for d in range(3)]
 
     def blur_samples(blur_size):
-        blur_radius = blur_size * blur_scale / 2
+        blur_radius = blur_size * blur_scale
         num_samples = 14
         samples = []
         while len(samples) < num_samples:
