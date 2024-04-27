@@ -14,7 +14,8 @@ from os import walk
 solid_region = 0.01
 default_num_shades = 3
 palette_regex = r'(\d+)(?!.*\.json).*'
-shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
+# shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
+shade_regex = r'[sS]\s*(\d+)(.*)'
 
 
 def is_palette(path):
