@@ -6,21 +6,9 @@ code_path = str(Path(workspace(q=True, rd=True)) / 'shading' / 'fantasy' / 'code
 if code_path not in sys.path:
     sys.path.append(code_path)
 
-import importlib
-from internals import network, sun_pair, global_controls, global_groups, measured_gradient, luminance, utilities, illuminee, screen_placement, tracking_projection, palettes, ground
-importlib.reload(network)
-importlib.reload(sun_pair)
-importlib.reload(global_controls)
-importlib.reload(global_groups)
-importlib.reload(measured_gradient)
-importlib.reload(luminance)
-importlib.reload(utilities)
-importlib.reload(illuminee)
-importlib.reload(screen_placement)
-importlib.reload(tracking_projection)
-importlib.reload(palettes)
-importlib.reload(ground)
+from importlib import reload
+from internals import shading_path
+reload(shading_path)
+from internals import shading_path
 
-from internals import ground
-g = ground.Ground({'mesh': 'test'}, PyNode('pPlane1'), '/Users/calder/Documents/Animation/Shading/shading/fantasy/palettes/3 grass/aigrass.jpg')
-g.animate()
+print(shading_path.relative_path_string('/Users/calder/Documents/Animation/Shading/shading/fantasy/palettes/4 bird/7 pastel red light/s2 pastel red light.psd'))

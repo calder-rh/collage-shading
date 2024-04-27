@@ -18,6 +18,8 @@ def error(title, message):
 
 class FacetShader(Network):
     relevant_context = ['mesh', 'facet']
+
+    global_orienter_group_name = 'texture_orienters'
     
     def __init__(self, context, masks_path, resolution, obj, lightness, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
         multiple_facets = masks_path is not None
@@ -51,8 +53,14 @@ class FacetShader(Network):
                 orienter_group = PyNode(orienter_group_name)
             else:
                 orienter_group = group(name=orienter_group_name, em=True)
+            
+            if objExists(FacetShader.global_orienter_group_name):
+                global_orienter_group = PyNode(FacetShader.global_orienter_group_name)
+            else:
+                global_orienter_group = group(name=FacetShader.global_orienter_group_name, em=True)
+            parent(orienter_group, global_orienter_group)
 
-            u, v, angle = orienter_settings
+            u, v, angle, unwarp = orienter_settings
             pin = createNode('uvPin', name=f'facet_{facet_index}_pin')
             pin.coordinate[0].set([u, v])
             pin.normalAxis.set(2)
@@ -63,7 +71,17 @@ class FacetShader(Network):
             locator_shape = createNode('locator', name=f'facet_{facet_index}_locator')
             locator_transform = locator_shape.getTransform()
             locator_transform.rename(name=f'facet_{facet_index}')
-            pin.outputMatrix[0] >> locator_transform.offsetParentMatrix
+            pin_out_matrix = pin.outputMatrix[0]
+            if unwarp:
+                decompose_pin = self.utility('decomposeMatrix', 'decompose_pin')
+                pin_out_matrix >> decompose_pin.inputMatrix
+                compose_pin = self.utility('composeMatrix', 'compose_pin')
+                decompose_pin.outputTranslate >> compose_pin.inputTranslate
+                decompose_pin.outputRotate >> compose_pin.inputRotate
+                opm = compose_pin.outputMatrix
+            else:
+                opm = pin_out_matrix
+            opm >> locator_transform.offsetParentMatrix
 
             if orienter_transforms:
                 locator_transform.t.set(orienter_transforms[str(facet_index)]['translate'])
@@ -176,7 +194,7 @@ class CollageShader(Network):
             if objExists(self.orienter_group_name):
                 orienter_transform_values = {}
                 for orienter in listRelatives(self.orienter_group_name):
-                    if (match := re.fullmatch(r'facet_(\d+)', orienter.name())):
+                    if (match := re.fullmatch('(?:' + self.orienter_group_name + r'\|)?facet_(\d+)', orienter.name())):
                         facet_num = match.group(1)
                         orienter_transform_values[facet_num] = {'translate': list(orienter.t.get()), 'rotate': list(orienter.r.get()), 'scale': list(orienter.s.get())}
                 with orienter_transform_path.open('w') as file:

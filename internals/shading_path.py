@@ -10,3 +10,6 @@ def shading_path(*args):
 
 def relative_path(path):
     return Path(path).relative_to(shading_dir.parent)
+
+def relative_path_string(path):
+    return './' + str(relative_path(path))

@@ -78,7 +78,7 @@ class GlobalControls(Network):
             set_visibility_in_render(light_direction_shape, False)
 
             gcn = lighting_controller_trans
-            addAttr(gcn, ln='default_lightness', min=0, smx=1, dv=0.5)
+            addAttr(gcn, ln='default_lightness', smn=0, smx=1, dv=0.5)
             addAttr(gcn, ln='default_contrast', min=0, smx=1, dv=0.5)
 
             addAttr(gcn, ln='ground_luminance_weight', min=0, smx=1, dv=0.5)

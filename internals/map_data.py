@@ -29,30 +29,6 @@ def error(msg):
     exit(1)
 
 
-# def group_and_count(locations):
-#     group_parents = {location: None for location in locations}
-
-#     def set_representative(location):
-#         while location is not None:
-#             prev = location
-#             location = group_parents[location]
-#         return prev
-            
-#     for (y, x) in group_parents:
-#         for dy, dx in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
-#             ny = y + dy
-#             nx = x + dx
-#             if (ny, nx) not in group_parents:
-#                 continue
-#             if group_parents[(ny, nx)] is None or set_representative((ny, nx)) != set_representative((y, x)):
-#                 group_parents[(y, x)] = (ny, nx)
-#                 continue
-
-#     groups = [group for group in [[location for location in locations if set_representative(location) == representative] for representative in locations] if group]
-#     indices = [len(group) for group in sorted(groups, key = lambda group: sum([y + x for y, x in group]) / len(group))]
-#     return indices
-
-
 def group_and_count(locations):
     coords = set(locations)
     groups = []
@@ -213,30 +189,46 @@ class FacetInstructions:
             return
         
         specified_angle = False
-        if len(locations) == 6:
-            center = None
-            for y, x in locations:
-                neighbors = {(y + dy, x + dx) for dy, dx in neighbor_coords}
-                if all(neighbor in locations for neighbor in neighbors):
-                    center = y, x
-                    break
-            specified_angle = center is not None
-            if specified_angle:
-                py, px = center
-                non_neighbor = (locations - neighbors - set((center,))).pop()
-                orienter_angle = degrees(atan2(center[0] - non_neighbor[0], non_neighbor[1] - center[1])) - 90
+        unwarp = False
+
+        center = None
+        top_neighbor_coords =  {(1, -1), (1, 1), (2, 0)}
+        for y, x in locations:
+            top_neighbors = {(y + dy, x + dx) for dy, dx in top_neighbor_coords}
+            if all(neighbor in locations for neighbor in top_neighbors):
+                center = y + 1, x
+                break
+        cy, cx = center
+        cross_pieces = {(cy + dy, cx + dx) for dy, dx in neighbor_coords}
+        non_cross_locations = locations - (cross_pieces | {center})
+        if len(non_cross_locations) == 1:
+            specified_angle = True
+            ncy, ncx = non_cross_locations.pop()
+            if center not in locations:
+                unwarp = True
         
-        if not specified_angle:
+        if specified_angle:
+            py, px = center
+            orienter_angle = degrees(atan2(cy - ncy, ncx - cx)) - 90
+        else:
             orienter_angle = 0
             py = sum(location[0] for location in locations) / len(locations)
             px = sum(location[1] for location in locations) / len(locations)
 
         u = (px + 0.5) / self.resolution
         v = ((self.resolution - py - 1) + 0.5) / self.resolution
-        self.orienter = [u, v, orienter_angle]
+        self.orienter = [u, v, orienter_angle, unwarp]
     
     def interpret_blur_markers(self):
-        self.blur_markers = list(self.instruction_pixels[yellow])
+        locations = self.instruction_pixels[yellow]
+
+        if self.color == white:
+            if not locations:
+                return
+            numbers = group_and_count(locations)
+            self.blur_markers = numbers[0] / numbers[1]
+        else:
+            self.blur_markers = list(locations)
     
     def interpret_instructions(self):
         self.interpret_palette()
@@ -319,6 +311,11 @@ def make_map_data(image_path, data_path):
     white_region.interpret_instructions()
     global_palette_path_indices = white_region.palette_path_indices
 
+    if white_region.blur_markers is not None:
+        global_blur_scale = white_region.blur_markers
+    else:
+        global_blur_scale = 1
+
     if global_palette_path_indices is None:
         global_path_type = GlobalPathType.none
     else:
@@ -384,6 +381,7 @@ def make_map_data(image_path, data_path):
                                    'map color': facet_instructions.color}
         all_facet_instructions_data[facet_instructions.color_index] = facet_instructions_data
     out_data['facets'] = all_facet_instructions_data
+    out_data['blur scale'] = global_blur_scale
     out_data['anti-aliasing warning'] = len(color_counts) > 100 or any(count < 25 for color, count in color_counts.items() if color != white)
     out_data['last modified'] = None
     if len(all_facet_instructions) > 2:

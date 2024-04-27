@@ -6,6 +6,7 @@ from internals.dialog_with_support import dialog_with_support
 from internals.utilities import format_unique_name
 
 default_blur_size_ratio = 0.1
+from random import uniform
 
 
 def vector_sum(p, q):
@@ -26,6 +27,7 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
         map_data = json.load(file)
 
     facet_instructions = map_data['facets']
+    blur_scale = map_data['blur scale']
     pixels = map_data['pixels']
     map_resolution = len(pixels)
 
@@ -96,11 +98,22 @@ def calculate_surface_values(obj, map_data_path, blur_resolution):
         max_blur_size = default_blur_size_ratio * bb_diagonal / average_scale
         one_size = True
             
+    # def blur_samples(blur_size):
+    #     blur_radius = blur_size / 2
+    #     cube_coord = 0.35 * blur_radius
+    #     octahedron_coord = 1 * blur_radius
+    #     return [*itertools.product((-cube_coord, cube_coord), repeat=3)] + [[s if c == d else 0 for c in range(3)] for s in (-octahedron_coord, octahedron_coord) for d in range(3)]
+
     def blur_samples(blur_size):
-        blur_radius = blur_size / 2
-        cube_coord = 0.35 * blur_radius
-        octahedron_coord = 1 * blur_radius
-        return [*itertools.product((-cube_coord, cube_coord), repeat=3)] + [[s if c == d else 0 for c in range(3)] for s in (-octahedron_coord, octahedron_coord) for d in range(3)]
+        blur_radius = blur_size * blur_scale / 2
+        num_samples = 14
+        samples = []
+        while len(samples) < num_samples:
+            point = tuple(uniform(-blur_radius, blur_radius) for _ in range(3))
+            if point[0] ** 2 + point[1] ** 2 + point[2] ** 2 <= blur_radius ** 2:
+                samples.append(point)
+        return samples
+        
     sample_contribution = 1 / (len(blur_samples(1)) + 1)
 
     num_facets = len(facet_instructions)
