@@ -316,8 +316,6 @@ def make_map_data(image_path, data_path):
     else:
         global_blur_scale = 1
 
-    error(str(global_palette_path_indices))
-
     if global_palette_path_indices is None:
         global_path_type = GlobalPathType.none
     else:
