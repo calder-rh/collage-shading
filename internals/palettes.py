@@ -14,8 +14,8 @@ from os import walk
 solid_region = 0.01
 default_num_shades = 3
 palette_regex = r'(\d+)(?!.*\.json).*'
-# shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
-shade_regex = r'[sS]\s*(\d+)(.*)'
+shade_regex = r'[sS]\s*(\d+)(?!.*\.tx)(.*)'
+shade_select_regex = r'[sS]\s*(\d+)(.*)'
 
 
 def is_palette(path):
@@ -29,7 +29,7 @@ def is_palette(path):
 
 def is_valid_selection(path):
     path = Path(path)
-    return is_palette(path) or (is_palette(path.parent) and re.fullmatch(shade_regex, path.name))
+    return is_palette(path) or (is_palette(path.parent) and re.fullmatch(shade_select_regex, path.name))
 
 
 is_gradient = is_palette
