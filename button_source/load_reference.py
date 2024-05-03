@@ -17,4 +17,4 @@ def run():
             if referenced_gcn.hasAttr(attr_name):
                 gcn.attr(attr_name) >> referenced_gcn.attr(attr_name)
     
-    reload.reload()
+    # reload.reload()
