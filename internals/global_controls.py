@@ -79,16 +79,16 @@ class GlobalControls(Network):
 
             gcn = lighting_controller_trans
             addAttr(gcn, ln='default_lightness', smn=0, smx=1, dv=0.5)
-            addAttr(gcn, ln='default_contrast', min=0, smx=1, dv=0.5)
+            addAttr(gcn, ln='default_contrast', min=0, smx=1, dv=0.24)
 
             addAttr(gcn, ln='ground_luminance_weight', min=0, smx=1, dv=0.5)
             addAttr(gcn, ln='ground_light_offset', smn=-1, smx=1, dv=0)
 
             addAttr(gcn, ln='atmospheric_perspective', at='compound', nc=5)
-            addAttr(gcn, p='atmospheric_perspective', ln='enable', at='bool')
-            addAttr(gcn, p='atmospheric_perspective', ln='min_distance', min=0, smx=1000, dv=100)
-            addAttr(gcn, p='atmospheric_perspective', ln='half_distance', min=1, smx=2000, dv=1000)
-            addAttr(gcn, p='atmospheric_perspective', ln='ground_half_distance', min=1, smx=2000, dv=1000)
+            addAttr(gcn, p='atmospheric_perspective', ln='enable', at='bool', dv=True)
+            addAttr(gcn, p='atmospheric_perspective', ln='min_distance', min=0, smx=2000, dv=500)
+            addAttr(gcn, p='atmospheric_perspective', ln='half_distance', min=1, smx=2000, dv=800)
+            addAttr(gcn, p='atmospheric_perspective', ln='ground_half_distance', min=1, smx=2000, dv=800)
             addAttr(gcn, p='atmospheric_perspective', ln='color', at='float3', uac=True)
             addAttr(gcn, ln='colorR', at='float', parent='color')
             addAttr(gcn, ln='colorG', at='float', parent='color')
