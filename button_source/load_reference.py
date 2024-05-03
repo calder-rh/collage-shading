@@ -10,14 +10,16 @@ importlib.reload(reload)
 from internals.global_controls import gcn
 
 
-attrs_not_to_connect = [
-    'atmospheric_perspective',
-    'enable',
-    'min_distance',
-    'half_distance',
-    'ground_half_distance',
-    'color'
-]
+# attrs_not_to_connect = [
+#     'atmospheric_perspective',
+#     'enable',
+#     'min_distance',
+#     'half_distance',
+#     'ground_half_distance',
+#     'color'
+# ]
+
+attrs_not_to_connect = []
 
 def run():
     for referenced_gcn in ls('*::shading_controls'):
