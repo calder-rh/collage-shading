@@ -83,7 +83,7 @@ class FacetShader(Network):
                 opm = pin_out_matrix
             opm >> locator_transform.offsetParentMatrix
 
-            if orienter_transforms:
+            if orienter_transforms and str(facet_index) in orienter_transforms:
                 locator_transform.t.set(orienter_transforms[str(facet_index)]['translate'])
                 locator_transform.r.set(orienter_transforms[str(facet_index)]['rotate'])
                 locator_transform.s.set(orienter_transforms[str(facet_index)]['scale'])
