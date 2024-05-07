@@ -33,4 +33,4 @@ def run():
         for illuminee in illuminees:
             illuminee.reset_lights()
 
-    reload.reload()
+    # reload.reload()

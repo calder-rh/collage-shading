@@ -26,4 +26,4 @@ def run():
     else:
         sets(lighting_sets.default_lights, remove=selected_lights)
     
-    reload.reload()
+    # reload.reload()
