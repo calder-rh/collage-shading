@@ -27,6 +27,7 @@ def run():
         for attr_name in listAttr(gcn, ud=True):
             if any(no in attr_name for no in attrs_not_to_connect):
                 continue
+            old_value = referenced_gcn.attr(attr_name)
             if referenced_gcn.hasAttr(attr_name):
                 gcn.attr(attr_name) >> referenced_gcn.attr(attr_name)
     
