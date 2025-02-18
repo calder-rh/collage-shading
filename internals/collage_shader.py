@@ -12,16 +12,35 @@ import json, re
 
 
 def error(title, message):
-    dialog_with_support(title, message, ['I’ll fix it'], cb='I’ll fix it', db='I’ll fix it', icon='warning')
+    dialog_with_support(
+        title,
+        message,
+        ["I’ll fix it"],
+        cb="I’ll fix it",
+        db="I’ll fix it",
+        icon="warning",
+    )
     exit()
 
 
 class FacetShader(Network):
-    relevant_context = ['mesh', 'facet']
+    relevant_context = ["mesh", "facet"]
 
-    global_orienter_group_name = 'texture_orienters'
-    
-    def __init__(self, context, masks_path, resolution, obj, lightness, facet_index, facet_settings, facet_center, orienter_group_name, orienter_transform_path):
+    global_orienter_group_name = "texture_orienters"
+
+    def __init__(
+        self,
+        context,
+        masks_path,
+        resolution,
+        obj,
+        lightness,
+        facet_index,
+        facet_settings,
+        facet_center,
+        orienter_group_name,
+        orienter_transform_path,
+    ):
         multiple_facets = masks_path is not None
 
         orienter_transforms = None
@@ -29,53 +48,57 @@ class FacetShader(Network):
             with orienter_transform_path.open() as file:
                 orienter_transforms = json.load(file)
 
-        palette = palettes.get_palette(facet_settings['palette'])
-        edge_distance = facet_settings.get('edge distance')
+        palette = palettes.get_palette(facet_settings["palette"])
+        edge_distance = facet_settings.get("edge distance")
         if edge_distance is None:
             edge_distance = (0.1, 0.1)
-        palette.make(facet_settings.get('scale', 1), edge_distance)
+        palette.make(facet_settings.get("scale", 1), edge_distance)
 
-        orienter_settings = facet_settings.get('orienter')
-        obj_up_settings = facet_settings.get('object up')
+        orienter_settings = facet_settings.get("orienter")
+        obj_up_settings = facet_settings.get("object up")
         if obj_up_settings is None:
             obj_up_settings = (0, 1, 0)
 
-        if obj.type() == 'transform':
+        if obj.type() == "transform":
             obj_shape = obj.getShape()
         else:
             obj_shape = obj
 
         if orienter_settings is None:
-            world_placement = self.build(WorldPlacement(context, obj, facet_center, obj_up_settings))
+            world_placement = self.build(
+                WorldPlacement(context, obj, facet_center, obj_up_settings)
+            )
 
         else:
             if objExists(orienter_group_name):
                 orienter_group = PyNode(orienter_group_name)
             else:
                 orienter_group = group(name=orienter_group_name, em=True)
-            
+
             if objExists(FacetShader.global_orienter_group_name):
                 global_orienter_group = PyNode(FacetShader.global_orienter_group_name)
             else:
-                global_orienter_group = group(name=FacetShader.global_orienter_group_name, em=True)
+                global_orienter_group = group(
+                    name=FacetShader.global_orienter_group_name, em=True
+                )
             parent(orienter_group, global_orienter_group)
 
             u, v, angle, unwarp = orienter_settings
-            pin = createNode('uvPin', name=f'facet_{facet_index}_pin')
+            pin = createNode("uvPin", name=f"facet_{facet_index}_pin")
             pin.coordinate[0].set([u, v])
             pin.normalAxis.set(2)
             pin.tangentAxis.set(0)
             mesh = obj_shape.worldMesh[0]
             mesh >> pin.originalGeometry
             mesh >> pin.deformedGeometry
-            locator_shape = createNode('locator', name=f'facet_{facet_index}_locator')
+            locator_shape = createNode("locator", name=f"facet_{facet_index}_locator")
             locator_transform = locator_shape.getTransform()
-            locator_transform.rename(name=f'facet_{facet_index}')
+            locator_transform.rename(name=f"facet_{facet_index}")
             pin_out_matrix = pin.outputMatrix[0]
             if unwarp:
-                decompose_pin = self.utility('decomposeMatrix', 'decompose_pin')
+                decompose_pin = self.utility("decomposeMatrix", "decompose_pin")
                 pin_out_matrix >> decompose_pin.inputMatrix
-                compose_pin = self.utility('composeMatrix', 'compose_pin')
+                compose_pin = self.utility("composeMatrix", "compose_pin")
                 decompose_pin.outputTranslate >> compose_pin.inputTranslate
                 decompose_pin.outputRotate >> compose_pin.inputRotate
                 opm = compose_pin.outputMatrix
@@ -84,52 +107,64 @@ class FacetShader(Network):
             opm >> locator_transform.offsetParentMatrix
 
             if orienter_transforms and str(facet_index) in orienter_transforms:
-                locator_transform.t.set(orienter_transforms[str(facet_index)]['translate'])
-                locator_transform.r.set(orienter_transforms[str(facet_index)]['rotate'])
-                locator_transform.s.set(orienter_transforms[str(facet_index)]['scale'])
+                locator_transform.t.set(
+                    orienter_transforms[str(facet_index)]["translate"]
+                )
+                locator_transform.r.set(orienter_transforms[str(facet_index)]["rotate"])
+                locator_transform.s.set(orienter_transforms[str(facet_index)]["scale"])
             else:
                 locator_transform.rz.set(angle)
 
             parent(locator_transform, orienter_group)
 
-            world_placement = self.build(WorldPlacement(context, locator_transform, (0, 0, 0), obj_up_settings))
+            world_placement = self.build(
+                WorldPlacement(context, locator_transform, (0, 0, 0), obj_up_settings)
+            )
 
-        if (facet_up := facet_settings.get('image up')) is not None:
+        if (facet_up := facet_settings.get("image up")) is not None:
             image_up = facet_up
         else:
-            image_up = palette.settings()['up']
-        screen_placement = self.build(CalculatedScreenPlacement(context, world_placement, image_up))
+            image_up = palette.settings()["up"]
+        screen_placement = self.build(
+            CalculatedScreenPlacement(context, world_placement, image_up)
+        )
 
-        shade_ramp = self.utility('aiRampRgb', 'shade_ramp')
-        shade_ramp.attr('type').set(0)
-        lightness >> shade_ramp.input
+        def input_builder(shade_index, facet_image):
+            tracking_projection_context = context | {"image": f"shade{shade_index}"}
+            tracking_projection = self.build(
+                TrackingProjection(
+                    tracking_projection_context,
+                    screen_placement,
+                    facet_image,
+                    isinstance(palette, palettes.ImagesPalette),
+                    obj,
+                ),
+                add_keys=False,
+            )
+            return tracking_projection.color
 
-        for shade_index, (facet_image, luminance_value) in enumerate(zip(palette.facet_images, palette.luminance_values)):
-            start_index = 2 * shade_index
-            end_index = start_index + 1
-            shade_ramp.ramp[start_index].ramp_Position.set(luminance_value[0])
-            shade_ramp.ramp[end_index].ramp_Position.set(luminance_value[1])
-
-            tracking_projection_context = context | {'image': f'shade{shade_index}'}
-            tracking_projection = self.build(TrackingProjection(tracking_projection_context, screen_placement, facet_image, isinstance(palette, palettes.ImagesPalette), obj), add_keys=False)
-
-            tracking_projection.color >> shade_ramp.ramp[start_index].ramp_Color
-            tracking_projection.color >> shade_ramp.ramp[end_index].ramp_Color
+        shade_ramp = palettes.build_palette_ramp(
+            self, palette, "shade_ramp", lightness, input_builder
+        )
 
         if multiple_facets:
-            facet_mask = self.texture('file', f'facet{facet_index}', isColorManaged=True)
-            facet_mask.fileTextureName.set(masks_path / f'{facet_index}.png', type='string')
+            facet_mask = self.texture(
+                "file", f"facet{facet_index}", isColorManaged=True
+            )
+            facet_mask.fileTextureName.set(
+                masks_path / f"{facet_index}.png", type="string"
+            )
             repeat_uv = resolution / (resolution + 2)
             offset = (1 - repeat_uv) / 2
             facet_mask.repeatU.set(repeat_uv)
             facet_mask.repeatV.set(repeat_uv)
             facet_mask.offsetU.set(offset)
             facet_mask.offsetV.set(offset)
-            corrected_facet_mask = self.utility('gammaCorrect', f'g_facet{facet_index}')
+            corrected_facet_mask = self.utility("gammaCorrect", f"g_facet{facet_index}")
             facet_mask.outColor >> corrected_facet_mask.value
             corrected_facet_mask.gamma.set((2,) * 3)
 
-            masked_shade_ramp = self.utility('aiMultiply', f'masked_ramp_{facet_index}')
+            masked_shade_ramp = self.utility("aiMultiply", f"masked_ramp_{facet_index}")
             corrected_facet_mask.outValue >> masked_shade_ramp.input1
             shade_ramp.outColor >> masked_shade_ramp.input2
 
@@ -139,13 +174,13 @@ class FacetShader(Network):
 
 
 class CollageShader(Network):
-    relevant_context = ['mesh']
-    delete = ['mesh']
+    relevant_context = ["mesh"]
+    delete = ["mesh"]
 
     def __init__(self, context, obj, map_image_path=None, palette=None, settings=None):
         obj = obj.getTransform()
         obj_shape = obj.getShape()
-        connections = listConnections(obj_shape, type='shadingEngine')
+        connections = listConnections(obj_shape, type="shadingEngine")
         if connections:
             old_sg = connections[0]
             for dsm in old_sg.dagSetMembers:
@@ -160,65 +195,88 @@ class CollageShader(Network):
                                 break
                             break
 
-        already_in_illuminee = obj_shape.hasAttr('scale_factor') and listConnections(obj_shape.scale_factor, s=True, d=False)
+        already_in_illuminee = obj_shape.hasAttr("scale_factor") and listConnections(
+            obj_shape.scale_factor, s=True, d=False
+        )
 
-        if not obj_shape.hasAttr('scale_factor'):
-            addAttr(obj_shape, ln='scale_factor')
+        if not obj_shape.hasAttr("scale_factor"):
+            addAttr(obj_shape, ln="scale_factor")
             obj_shape.scale_factor.set(1)
-        
-        if not obj_shape.hasAttr('lightness'):
-            addAttr(obj_shape, ln='lightness')
+
+        if not obj_shape.hasAttr("lightness"):
+            addAttr(obj_shape, ln="lightness")
             gcn.default_lightness >> obj_shape.lightness
 
-        if not obj_shape.hasAttr('atmosphere_blend'):
-            addAttr(obj_shape, ln='atmosphere_blend')
+        if not obj_shape.hasAttr("atmosphere_blend"):
+            addAttr(obj_shape, ln="atmosphere_blend")
             obj_shape.atmosphere_blend.set(0)
-        
 
         if palette or settings:
             if settings:
                 facet_settings = settings
             else:
-                facet_settings = {
-                    'palette': palette
-                }
-            
-            facet_shader = self.build(FacetShader(context | {'facet': '0'}, None, None, obj, obj_shape.lightness, 0, facet_settings, (0, 0, 0), None, None), add_keys=False)
+                facet_settings = {"palette": palette}
+
+            facet_shader = self.build(
+                FacetShader(
+                    context | {"facet": "0"},
+                    None,
+                    None,
+                    obj,
+                    obj_shape.lightness,
+                    0,
+                    facet_settings,
+                    (0, 0, 0),
+                    None,
+                    None,
+                ),
+                add_keys=False,
+            )
             raw_color = facet_shader.color
         else:
             map_dir_path = map_image_path.with_name(map_image_path.stem)
 
-            self.orienter_group_name = format_unique_name(obj) + '_orienters'
-            orienter_transform_path = map_dir_path / 'orienters.json'
+            self.orienter_group_name = format_unique_name(obj) + "_orienters"
+            orienter_transform_path = map_dir_path / "orienters.json"
 
             if objExists(self.orienter_group_name):
                 orienter_transform_values = {}
                 for orienter in listRelatives(self.orienter_group_name):
-                    if (match := re.fullmatch('(?:' + self.orienter_group_name + r'\|)?facet_(\d+)', orienter.name())):
+                    if match := re.fullmatch(
+                        "(?:" + self.orienter_group_name + r"\|)?facet_(\d+)",
+                        orienter.name(),
+                    ):
                         facet_num = match.group(1)
-                        orienter_transform_values[facet_num] = {'translate': list(orienter.t.get()), 'rotate': list(orienter.r.get()), 'scale': list(orienter.s.get())}
-                with orienter_transform_path.open('w') as file:
+                        orienter_transform_values[facet_num] = {
+                            "translate": list(orienter.t.get()),
+                            "rotate": list(orienter.r.get()),
+                            "scale": list(orienter.s.get()),
+                        }
+                with orienter_transform_path.open("w") as file:
                     json.dump(orienter_transform_values, file, indent=4)
-                
+
                 delete(self.orienter_group_name)
             else:
                 if orienter_transform_path.exists():
                     orienter_transform_path.unlink()
-            
-            map_data_path = map_dir_path / 'map data.json'
+
+            map_data_path = map_dir_path / "map data.json"
             with map_data_path.open() as file:
-                facet_settings_dict = json.load(file)['facets']
-            all_facet_settings = [facet_settings_dict[key] for key in sorted(facet_settings_dict.keys(), key=lambda x: int(x))]
+                facet_settings_dict = json.load(file)["facets"]
+            all_facet_settings = [
+                facet_settings_dict[key]
+                for key in sorted(facet_settings_dict.keys(), key=lambda x: int(x))
+            ]
             num_facets = len(all_facet_settings)
             multiple_facets = num_facets > 1
 
             if multiple_facets:
-                surface_values_path = map_dir_path / 'surface values.json'
-                masks_path = map_dir_path / 'masks'
+                surface_values_path = map_dir_path / "surface values.json"
+                masks_path = map_dir_path / "masks"
                 with surface_values_path.open() as file:
                     surface_values = json.load(file)
-                facet_centers = surface_values['facet centers']
-                resolution = len(surface_values['blur values'])
+                facet_centers = surface_values["facet centers"]
+                resolution = len(surface_values["blur values"])
 
             last_texture = None
             raw_color = None
@@ -228,45 +286,58 @@ class CollageShader(Network):
                     facet_center = facet_centers[facet_index]
                 else:
                     facet_center = [0, 0, 0]
-                
+
                 if not multiple_facets:
                     masks_path = None
                     resolution = None
-                facet_shader = self.build(FacetShader(context | {'facet': str(facet_index)}, masks_path, resolution, obj, obj_shape.lightness, facet_index, facet_settings, facet_center, self.orienter_group_name, orienter_transform_path), add_keys=False)
-                
+                facet_shader = self.build(
+                    FacetShader(
+                        context | {"facet": str(facet_index)},
+                        masks_path,
+                        resolution,
+                        obj,
+                        obj_shape.lightness,
+                        facet_index,
+                        facet_settings,
+                        facet_center,
+                        self.orienter_group_name,
+                        orienter_transform_path,
+                    ),
+                    add_keys=False,
+                )
+
                 if not multiple_facets:
                     raw_color = facet_shader.color
                     break
 
                 if facet_index == 0:
-                    last_texture = self.utility('aiAdd', f'add_facets_0')
+                    last_texture = self.utility("aiAdd", f"add_facets_0")
                     facet_shader.color >> last_texture.input1
                 elif facet_index > 1:
-                    new_texture = self.utility('aiAdd', f'add_facets_{facet_index - 1}')
+                    new_texture = self.utility("aiAdd", f"add_facets_{facet_index - 1}")
                     last_texture.outColor >> new_texture.input1
                     last_texture = new_texture
 
                 if facet_index >= 1:
                     facet_shader.color >> last_texture.input2
-            
+
             if not raw_color:
                 if num_facets == 2:
                     raw_color = last_texture.outColor
                 else:
                     raw_color = new_texture.outColor
-    
 
         # Apply atmospheric perspective
-        
-        atmosphere_blender = self.utility('blendColors', 'atmosphere_blender')
+
+        atmosphere_blender = self.utility("blendColors", "atmosphere_blender")
         raw_color >> atmosphere_blender.color2
         gcn.atmospheric_perspective.color >> atmosphere_blender.color1
         obj_shape.atmosphere_blend >> atmosphere_blender.blender
-        
-        shader = self.shader('surfaceShader', 'collage_shader')
+
+        shader = self.shader("surfaceShader", "collage_shader")
         atmosphere_blender.output >> shader.outColor
 
-        sg = self.utility('shadingEngine', 'collage_shader_SG')
+        sg = self.utility("shadingEngine", "collage_shader_SG")
         shader.outColor >> sg.surfaceShader
 
         sets(sg, e=True, fe=obj)
@@ -275,4 +346,4 @@ class CollageShader(Network):
 
         # Create an initial illuminee for this one object, if it's not already part of one:
         if not already_in_illuminee:
-            Illuminee({'obj': obj.name()}, obj)
+            Illuminee({"obj": obj.name()}, obj)

@@ -3,7 +3,7 @@ from internals.network import Network
 
 from internals.global_controls import gcn
 from internals.utilities import connect_texture_placement, do_later, add_attr
-from internals.palettes import get_palette
+from internals.palettes import get_palette, build_palette_ramp, uv_input_builder_builder
 
 
 class UVShader(Network):
@@ -42,7 +42,7 @@ class UVShader(Network):
             obj_transform, p="internals", ln="used_as_illuminee", at="bool", dv=True
         )
         add_attr(
-            obj_transform, p="internals", ln="ground_illuminee", at="bool", dv=True
+            obj_transform, p="internals", ln="regular_illuminee", at="bool", dv=False
         )
         add_attr(obj_transform, p="internals", ln="lightness")
         add_attr(obj_transform, p="internals", ln="added_lights", at="message")
@@ -51,29 +51,13 @@ class UVShader(Network):
         palette = get_palette(palette_path)
         palette.make(1, (0, 0))
 
-        shade_ramp = self.utility("aiRampRgb", "shade_ramp")
-        shade_ramp.attr("type").set(0)
-        obj_transform.lightness >> shade_ramp.input
-
-        for shade_index, (facet_image, luminance_value) in enumerate(
-            zip(palette.facet_images, palette.luminance_values)
-        ):
-            start_index = 2 * shade_index
-            end_index = start_index + 1
-            shade_ramp.ramp[start_index].ramp_Position.set(luminance_value[0])
-            shade_ramp.ramp[end_index].ramp_Position.set(luminance_value[1])
-
-            image_texture = self.texture(
-                "file", f"shade_{shade_index}", isColorManaged=True
-            )
-            image_texture.fileTextureName.set(facet_image.image, type="string")
-            texture_placement = self.utility(
-                "place2dTexture", f"placement_{shade_index}"
-            )
-            connect_texture_placement(texture_placement, image_texture)
-
-            image_texture.outColor >> shade_ramp.ramp[start_index].ramp_Color
-            image_texture.outColor >> shade_ramp.ramp[end_index].ramp_Color
+        shade_ramp = build_palette_ramp(
+            self,
+            palette,
+            "shade_ramp",
+            obj_transform.lightness,
+            uv_input_builder_builder(self),
+        )
 
         # Apply atmospheric perspective
 

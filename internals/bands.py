@@ -30,8 +30,9 @@ x_ss_samples = [-0.4, 0, 0.4]
 class GroundBand(Network):
     relevant_context = ["mesh", "index"]
 
-    def __init__(self, context, ground, index):
+    def __init__(self, context, ground, illuminee, index):
         self.ground = ground
+        self.illuminee = illuminee
         self.index = index
 
         self.screen_placement = AnimatedScreenPlacement(
@@ -120,7 +121,11 @@ class GroundBand(Network):
 
         x_ss = uniform(-0.5, 0.5)
         y_ss = uniform(-0.5, 0.5)
-        scale = abs(gcn.texture_scale.get(t=playback_min) / self.z_gs(playback_min))
+        scale = abs(
+            self.illuminee.control_node.scale_factor.get()
+            * gcn.texture_scale.get(t=playback_min)
+            / self.z_gs(playback_min),
+        )
         self.screen_placement.set_key(playback_min, x_ss, y_ss, 0, scale)
 
         # x_ss_samples = [i / 10 for i in range(-4, 6, 2)]
@@ -199,7 +204,7 @@ class GroundBand(Network):
                 self.screen_placement.set_key(frame, x_ss, y_ss, 0, scale)
 
 
-class Ground(Network):
+class BandShader(Network):
     relevant_context = ["mesh"]
 
     def __init__(self, context, mesh):
@@ -250,17 +255,8 @@ class Ground(Network):
         self.vertex_from_xyz_ws = closest_point_to_regular_ground.closestVertexIndex
 
         illuminee = Illuminee({"obj": context["mesh"] + "_ground"}, self.mesh)
-        illuminee.control_node.gradient_weight.disconnect()
-        illuminee.control_node.gradient_weight.set(0)
-        illuminee.control_node.lights_weight.disconnect()
-        illuminee.control_node.lights_weight.set(0.5)
-        illuminee.control_node.angle_weight.disconnect()
-        illuminee.control_node.angle_weight.set(0.5)
-        illuminee.control_node.min_saturation.disconnect()
-        illuminee.control_node.min_saturation.set(1)
+        illuminee.control_node.regular_illuminee.set(False)
         self.lightness = illuminee.control_node.lightness
-
-        sets(lighting_sets.global_set, add=illuminee.control_node.angle_remap.get())
 
         self.decompose_camera = self.utility("decomposeMatrix", "decompose_camera")
         gcn.camera.world_matrix >> self.decompose_camera.inputMatrix
@@ -288,7 +284,7 @@ class Ground(Network):
         )
 
         self.bands = [
-            GroundBand(context | {"index": str(i)}, self, i)
+            GroundBand(context | {"index": str(i)}, self, illuminee, i)
             for i in range(gcn.band_count.get())
         ]
 

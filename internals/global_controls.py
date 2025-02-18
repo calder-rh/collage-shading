@@ -1,7 +1,7 @@
 from pymel.core import *
 from internals.network import Network
 
-from internals.utilities import set_visibility_in_render
+from internals.utilities import set_visibility_in_render, add_attr
 
 
 class LightingSets(Network):
@@ -139,10 +139,17 @@ class GlobalControls(Network):
 
             addAttr(gcn, ln="texture_scale", min=0, smx=1000, dv=500)
 
-            addAttr(gcn, ln="ground", at="compound", nc=3)
-            addAttr(gcn, p="ground", ln="band_spacing", dv=200)
-            addAttr(gcn, p="ground", ln="band_count", at="short", dv=20)
-            addAttr(gcn, p="ground", ln="initial_band_offset", dv=0)
+            # addAttr(gcn, ln="bands", at="compound", nc=4)
+            # addAttr(gcn, p="bands", ln="band_spacing", dv=200)
+            # addAttr(gcn, p="bands", ln="band_count", at="short", dv=20)
+            # addAttr(gcn, p="bands", ln="initial_band_offset", dv=0)
+            # addAttr(gcn, p="bands", ln="band_offset")
+
+            add_attr(gcn, ln="bands", at="compound", nc=4)
+            add_attr(gcn, p="bands", ln="band_spacing", dv=200)
+            add_attr(gcn, p="bands", ln="band_count", at="short", dv=20)
+            add_attr(gcn, p="bands", ln="initial_band_offset", dv=0)
+            add_attr(gcn, p="bands", ln="band_offset")
 
             addAttr(gcn, ln="camera", at="compound", nc=8)
             addAttr(gcn, p="camera", ln="camera_message", at="message")

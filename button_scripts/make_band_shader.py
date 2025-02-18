@@ -6,7 +6,7 @@ code_path = str(Path(workspace(q=True, rd=True)) / 'shading' / 'fantasy' / 'code
 if code_path not in sys.path:
     sys.path.append(code_path)
 
-from button_source import ground
-importlib.reload(ground)
-from button_source import ground
-ground.run()
+from button_source import make_band_shader
+importlib.reload(make_band_shader)
+from button_source import make_band_shader
+make_band_shader.run()
