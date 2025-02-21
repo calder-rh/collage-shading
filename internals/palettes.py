@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from random import uniform
 from enum import Enum
 from os import walk
-from utilities import connect_texture_placement
+from internals.utilities import connect_texture_placement
 
 
 solid_region = 0.01

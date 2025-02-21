@@ -45,11 +45,11 @@ class GrassShader(Network):
         # Grass lighting
         add_attr(obj_transform, ln="base_lighting_weight", smn=0, smx=1, dv=1)
         add_attr(obj_transform, ln="scene_lighting_weight", smn=0, smx=1, dv=1)
-        add_attr(obj_transform, ln="lighting_offset", smn=-1, smx=1, dv=-1)
+        add_attr(obj_transform, ln="lighting_offset", smn=-1, smx=1, dv=0)
         add_attr(obj_transform, ln="max_luminance", min=0, smx=10, dv=1)
 
         # Grass shape
-        add_attr(obj_transform, ln="grass_height", min=0, smx=200, dv=100)
+        add_attr(obj_transform, ln="grass_height", min=0, smx=200, dv=1)
         add_attr(obj_transform, ln="grass_density", min=0, smx=5, dv=4)
         # exponential: 4 becomes 10000 in aiNoise
 
@@ -60,7 +60,8 @@ class GrassShader(Network):
         add_attr(obj_transform, ln="min_height_factor", min=0, max=1, dv=0)
 
         # Texture paths
-        add_attr(obj_transform, ln="base_path", dt="string", dv=base_file)
+        add_attr(obj_transform, ln="base_path", dt="string")
+        obj_transform.base_path.set(str(base_file))
         add_attr(obj_transform, ln="scene_path", dt="string")
 
         # Create the shader ----------------
@@ -69,8 +70,13 @@ class GrassShader(Network):
 
         luminance = self.utility("surfaceLuminance", "luminance")
         live_scene_lighting = self.divide(
-            luminance, obj_transform.max_luminance, "live_scene_lighting"
+            luminance.outValue, obj_transform.max_luminance, "live_scene_lighting"
         )
+
+        live_lighting_grayscale = self.utility("blendColors", "live_lighting_grayscale")
+        live_lighting_grayscale.color1.set(1, 1, 1)
+        live_lighting_grayscale.color2.set(0, 0, 0)
+        live_scene_lighting >> live_lighting_grayscale.blender
 
         # Recorded scene lighting
 
@@ -83,6 +89,7 @@ class GrassShader(Network):
         )
         connect_texture_placement(recorded_scene_lighting_tp, recorded_scene_lighting)
 
+        recorded_scene_lighting.useFrameExtension.set(True)
         SCENE.time1.outTime >> recorded_scene_lighting.frameExtension
 
         # Base lighting
@@ -94,14 +101,13 @@ class GrassShader(Network):
 
         # Shader color value
 
-        scene_lighting = self.utility("choice", "scene_lighting")
-        obj_transform.shader_mode >> scene_lighting.selector
-        live_scene_lighting >> scene_lighting.input[0]
-        scene_lighting.input[1].set(0)
-        recorded_scene_lighting.outColorR >> scene_lighting.input[2]
+        scene_lighting = self.utility("aiSwitch", "scene_lighting")
+        obj_transform.shader_mode >> scene_lighting.attr("index")
+        live_lighting_grayscale.output >> scene_lighting.input0
+        recorded_scene_lighting.outColor >> scene_lighting.input2
 
         weighted_scene_lighting = self.multiply(
-            scene_lighting.output,
+            scene_lighting.outColorR,
             obj_transform.scene_lighting_weight,
             "weighted_scene_lighting",
         )
@@ -111,7 +117,7 @@ class GrassShader(Network):
             "weighted_base_lighting",
         )
         scene_plus_base = self.add(
-            weighted_scene_lighting, scene_plus_base, "scene_plus_base"
+            weighted_scene_lighting, weighted_base_lighting, "scene_plus_base"
         )
         final_lighting = self.add(
             scene_plus_base, obj_transform.lighting_offset, "final_lighting"
@@ -128,22 +134,17 @@ class GrassShader(Network):
         gcn.atmospheric_perspective.color >> atmosphere_blender.color1
         gcn.ground_atmospheric_perspective >> atmosphere_blender.blender
 
-        live_lighting_grayscale = self.utility("blendColors", "live_lighting_grayscale")
-        live_lighting_grayscale.color1.set(1, 1, 1)
-        live_lighting_grayscale.color2.set(0, 0, 0)
-        live_scene_lighting >> live_lighting_grayscale.blender
-
-        shader_color = self.utility("choice", "shader_color")
-        obj_transform.shader_mode >> shader_color.selector
-        atmosphere_blender.output >> shader_color.input[0]
-        live_lighting_grayscale.output >> shader_color.input[1]
-        atmosphere_blender.output >> shader_color.input[2]
+        shader_color = self.utility("aiSwitch", "shader_color")
+        obj_transform.shader_mode >> shader_color.attr("index")
+        atmosphere_blender.output >> shader_color.input0
+        live_lighting_grayscale.output >> shader_color.input1
+        atmosphere_blender.output >> shader_color.input2
 
         # Shader displacement value
 
         grass_noise = self.utility("aiNoise", "grass_noise")
         grass_noise.coordSpace.set(3)
-        grass_density = self.power(10, obj_transform.grass_density)
+        grass_density = self.power(10, obj_transform.grass_density, "grass_density")
         grass_density >> grass_noise.scaleX
         grass_density >> grass_noise.scaleY
         grass_density >> grass_noise.scaleZ
@@ -158,29 +159,35 @@ class GrassShader(Network):
         SCENE.camera_distance.outFloat >> grass_falloff.inputValue
 
         grass_point_height_with_falloff = self.multiply(
-            grass_point_height_without_falloff, grass_falloff.outValue
+            grass_point_height_without_falloff,
+            grass_falloff.outValue,
+            "grass_point_height_with_falloff",
         )
 
-        grass_point_height = self.utility("choice", "grass_point_height")
-        obj_transform.grass_falloff >> grass_point_height.selector
-        grass_point_height_without_falloff >> grass_point_height.input[0]
-        grass_point_height_with_falloff >> grass_point_height.input[1]
+        grass_point_height = self.utility("floatCondition", "grass_point_height")
+        obj_transform.grass_falloff >> grass_point_height.condition
+        grass_point_height_with_falloff >> grass_point_height.floatA
+        grass_point_height_without_falloff >> grass_point_height.floatB
 
-        displacement_amount = self.utility("choice", "displacement_amount")
-        obj_transform.shader_mode >> displacement_amount.selector
-        displacement_amount.input[0].set(0)
-        displacement_amount.input[1].set(0)
-        grass_point_height >> displacement_amount.input[2]
+        mode_is_render = self.utility("equal", "mode_is_render")
+        mode_is_render.epsilon.set(0.5)
+        obj_transform.shader_mode >> mode_is_render.input1
+        mode_is_render.input2.set(2)
+
+        displacement_amount = self.utility("floatCondition", "displacement_amount")
+        mode_is_render.output >> displacement_amount.condition
+        grass_point_height.outFloat >> displacement_amount.floatA
+        displacement_amount.floatB.set(0)
 
         shader_displacement = self.shader("displacementShader", "shader_displacement")
-        displacement_amount.output >> shader_displacement.displacement
+        displacement_amount.outFloat >> shader_displacement.displacement
         obj_transform.grass_height >> shader_displacement.scale
 
         # Create the final shader
 
         sg = self.utility("shadingEngine", "grass_SG")
         shader = self.shader("surfaceShader", "grass_shader")
-        shader_color.output >> shader.outColor
+        shader_color.outColor >> shader.outColor
         shader.outColor >> sg.surfaceShader
         shader_displacement.displacement >> sg.displacementShader
 

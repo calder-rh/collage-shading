@@ -1077,3 +1077,11 @@ ok how do palettes work again… why did I need to do that for loop?
 
 ok now for atm.p.
 
+## 2/19
+
+ok so apparently choice nodes cannot take a texture, just a single value
+how to do this in a worse way
+ah a ramp. haha
+or a layered texture.
+oh. I can just use aiSwitch instead of choice.
+if I need a single value I can just use the R channel.
